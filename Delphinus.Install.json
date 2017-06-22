@@ -1,0 +1,37 @@
+{
+  "search_pathes": [{
+    "pathes": ".",
+    "platforms": "Win32;Win64"
+  }],
+  "browsing_pathes": [{
+    "pathes": ".",
+    "platforms": "Win32;Win64"
+  }],
+  "source_folders": [{
+    "folder": "."
+  },
+  {
+    "folder": "Samples",
+    "recursive": true
+  },
+  {
+    "folder": "Tests",
+    "recursive": true
+  }],
+  "projects": [{
+    "project": "KernowSoftwareFMX.dproj",
+    "compiler": 29
+  },
+  {
+    "project": "KernowSoftwareFMX.dproj",
+    "compiler": 30
+  },
+  {
+    "project": "KernowSoftwareFMX.dproj",
+    "compiler": 31
+  },
+  {
+    "project": "KernowSoftwareFMX.dproj",
+    "compiler": 32
+  }]
+}

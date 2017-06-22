@@ -1,0 +1,9 @@
+{
+  "id": "{40e45656-8229-43be-aa34-8635b0b154e5}",
+  "name": "ksComponents",
+  "platforms": "Win32;Win64",
+  "package_compiler_min": 29,
+  "package_compiler_max": 32,
+  "compiler_min": 29,
+  "compiler_max": 32
+}
