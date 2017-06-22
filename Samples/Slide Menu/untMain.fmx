@@ -9,30 +9,6 @@ object Form24: TForm24
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
   DesignerMasterStyle = 2
-  object ToolBar1: TToolBar
-    Size.Width = 356.000000000000000000
-    Size.Height = 44.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 0
-    object Label1: TLabel
-      Align = Contents
-      StyledSettings = [Family, Style, FontColor]
-      Size.Width = 356.000000000000000000
-      Size.Height = 44.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.Font.Size = 16.000000000000000000
-      TextSettings.HorzAlign = Center
-      Text = 'TksSlideMenu Demo'
-    end
-    object SpeedButton1: TSpeedButton
-      Align = Left
-      Size.Width = 44.000000000000000000
-      Size.Height = 44.000000000000000000
-      Size.PlatformDefault = False
-      StyleLookup = 'detailstoolbutton'
-      Text = 'SpeedButton1'
-    end
-  end
   object TabControl1: TTabControl
     Align = Client
     Size.Width = 356.000000000000000000
@@ -40,7 +16,7 @@ object Form24: TForm24
     Size.PlatformDefault = False
     TabHeight = 49.000000000000000000
     TabIndex = 0
-    TabOrder = 1
+    TabOrder = 0
     TabPosition = PlatformDefault
     Sizes = (
       356s
@@ -1321,13 +1297,14 @@ object Form24: TForm24
               3FBBE7BC6DD303E68A0000000049454E44AE426082}
             FileName = 'C:\Users\Graham\Desktop\images.jpg'
           end>
-        Position.X = 88.000000000000000000
-        Position.Y = 136.000000000000000000
+        Position.X = 40.000000000000000000
+        Position.Y = 96.000000000000000000
         Size.Width = 177.000000000000000000
         Size.Height = 121.000000000000000000
         Size.PlatformDefault = False
         object Label2: TLabel
-          Position.Y = -28.000000000000000000
+          Position.X = 8.000000000000000000
+          Position.Y = -36.000000000000000000
           Size.Width = 177.000000000000000000
           Size.Height = 21.000000000000000000
           Size.PlatformDefault = False
@@ -2212,8 +2189,8 @@ object Form24: TForm24
               000049454E44AE426082}
             FileName = 'C:\Users\Graham\Desktop\BuiltWithDelphi.jpg'
           end>
-        Position.X = 88.000000000000000000
-        Position.Y = 136.000000000000000000
+        Position.X = 40.000000000000000000
+        Position.Y = 96.000000000000000000
         Size.Width = 177.000000000000000000
         Size.Height = 121.000000000000000000
         Size.PlatformDefault = False
@@ -4253,8 +4230,8 @@ object Form24: TForm24
               0049454E44AE426082}
             FileName = 'C:\Users\Graham\Desktop\DelphiCurso-RodrigoC.png'
           end>
-        Position.X = 88.000000000000000000
-        Position.Y = 136.000000000000000000
+        Position.X = 40.000000000000000000
+        Position.Y = 96.000000000000000000
         Size.Width = 177.000000000000000000
         Size.Height = 121.000000000000000000
         Size.PlatformDefault = False
@@ -4276,45 +4253,22 @@ object Form24: TForm24
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     StyleLookup = 'bottomtoolbar'
-    TabOrder = 4
+    TabOrder = 3
+  end
+  object ksToolbar1: TksToolbar
+    Font.Size = 14.000000000000000000
+    Text = 'TksSlideMenu Demo'
+    Size.Width = 356.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    OnMenuButtonClick = ksToolbar1MenuButtonClick
   end
   object ksSlideMenu1: TksSlideMenu
     Appearence.HeaderFontColor = claNull
-    Appearence.ItemColor = claNull
-    Appearence.Theme = mtCustom
-    Font.Size = 14.000000000000000000
-    HeaderFont.Size = 16.000000000000000000
-    SlideSpeed = 0.200000002980232200
     OnSelectMenuItemEvent = ksSlideMenu1SelectMenuItemEvent
-    Toolbar.Bitmap.PNG = {
-      89504E470D0A1A0A0000000D4948445200000018000000180806000000E0773D
-      F8000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
-      029649444154484BB594416B1A5110C7475D8D462D560F319A9A9C0A3D04A39F
-      205FA0363D0829B4EAB1F4944373905E92BBD05C7B0B52D44B698EE92D0484DC
-      1441F090430A51A2508C1AAB75D7DDBE1957BB7175E306FA83FFEEDBB7F366DE
-      FEDF28FC6F0C7849A55252A3D1A0092D0683017C6F0661082679E61FBBCFEF20
-      F5E903E55362C44BBD7E0376BB1D7C3E9F4A6EB71B0C0603A95EAF43B30F703D
-      70A954AA5C52C269A800E27038C0EBF5AAE4F178E48811AD5C02A4CC4B95DC86
-      A61C711F2A60E70570974AD03F3D55C99CCFC30BB673D44AAF478B6661015E1E
-      CDE0CB9B5D49027850DF3637A579C4626F59881AFA02F61E201201C8E5D43A3C
-      A44084E27442A7FE391E935E178AC0ADAED2A412B1D502A156A3F10FF6FEFDC5
-      058DA789C7DF413AFD55D54534914C2625EC22EC142D2A950A4B92969FEE33AF
-      005924083C0C87436AD569994C2668B7DB24411068911E74B7A95EA8C0789768
-      C1B4AAD52AD86C3612C6E965D24528511435F5E82EDADFFF28ADAD3D83402040
-      934A3A9D0E94CB6508854260344E1C9D093BA3E91D7427056CB665B05AAD34AB
-      84E779E8B15F70381C8668340AE2ED2DF05757B0B4B52547CC279BCD4AB4258E
-      3383C5629958A514C771E0743A6901D22F16A1B1B7273F3D0C1558A44D67815F
-      F2871544F0FEFBEC8CC64A26A6EA6D534C78BDBD4DE35F0707A4EEC9095CBA5C
-      64E3180E2FE35DE281CE025B540926FFC90E7DBD50A0B3C0E4E68D0D7031EB9E
-      241272D48885DB548989ED722918248B10EFF131DD6B3B3B70C30A8CE7112A80
-      09FCFE154D29E1D86E312926433B9A47476067C9D7D9972D33DBEE985563C822
-      9FCF0FE7E779CD3FBB48E4953C1A81D63C659660110FB308EF46F665885F5160
-      6132998CC86CD405AED1FE7F56C082B103ECA3A74581EE5F1AADCB806BA554CC
-      0000000049454E44AE426082}
-    Toolbar.Text = 'TksSlideMenu Demo'
-    Toolbar.Font.Size = 14.000000000000000000
-    ToggleButton = SpeedButton1
-    Left = 32
-    Top = 72
+    OnBuildMenu = ksSlideMenu1BuildMenu
+    Left = 40
+    Top = 240
   end
 end

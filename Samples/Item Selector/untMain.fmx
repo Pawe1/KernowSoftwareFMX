@@ -25,31 +25,6 @@ object Form24: TForm24
       Text = 'Item Selector Demo'
     end
   end
-  object ksTableView1: TksTableView
-    Align = Client
-    BackgroundText.Font.Size = 18.000000000000000000
-    DeleteButton.Text = 'Delete'
-    DragDropOptions.Opacity = 1.000000000000000000
-    HeaderOptions.Color = claNull
-    HeaderOptions.StickyHeaders.Button.JumpToHeaderOptions.HeaderHeight = 32.000000000000000000
-    HeaderOptions.StickyHeaders.Button.JumpToHeaderOptions.ItemHeight = 32.000000000000000000
-    PullToRefresh.Font.Size = 16.000000000000000000
-    PullToRefresh.PullText = 'pull to refresh'
-    PullToRefresh.ReleaseText = 'release to refresh'
-    SelectionOptions.SelectionOverlay.Size = 0
-    Size.Width = 327.000000000000000000
-    Size.Height = 305.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 1
-    TextDefaults.Title.Font.Size = 13.000000000000000000
-    TextDefaults.Title.TextColor = claBlack
-    TextDefaults.SubTitle.Font.Size = 13.000000000000000000
-    TextDefaults.SubTitle.TextColor = claDimgray
-    TextDefaults.Detail.Font.Size = 13.000000000000000000
-    TextDefaults.Detail.TextColor = claDodgerblue
-    TextDefaults.Header.Font.Size = 13.000000000000000000
-    TextDefaults.Header.TextColor = claBlack
-  end
   object ToolBar2: TToolBar
     Align = Bottom
     Padding.Left = 4.000000000000000000
@@ -61,6 +36,17 @@ object Form24: TForm24
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     StyleLookup = 'bottomtoolbar'
-    TabOrder = 2
+    TabOrder = 1
+  end
+  object ksVirtualListView1: TksVirtualListView
+    Align = Client
+    DeleteButton.Text = 'Delete'
+    NoItemsText.Font.Size = 18.000000000000000000
+    PullToRefresh.PullText = 'PULL TO REFRESH'
+    PullToRefresh.ReleaseText = 'RELEASE TO REFRESH'
+    Size.Width = 327.000000000000000000
+    Size.Height = 305.000000000000000000
+    Size.PlatformDefault = False
+    OnGetPickerItems = ksVirtualListView1GetPickerItems
   end
 end

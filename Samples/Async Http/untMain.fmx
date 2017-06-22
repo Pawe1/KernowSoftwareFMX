@@ -7,7 +7,7 @@ object Form33: TForm33
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
-  DesignerMasterStyle = 2
+  DesignerMasterStyle = 0
   object ToolBar1: TToolBar
     Padding.Left = 8.000000000000000000
     Padding.Top = 8.000000000000000000
@@ -23,7 +23,7 @@ object Form33: TForm33
       Position.X = 8.000000000000000000
       Position.Y = 8.000000000000000000
       Size.Width = 97.000000000000000000
-      Size.Height = 30.000000000000000000
+      Size.Height = 28.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = 'listitembutton'
       TabOrder = 1
@@ -36,7 +36,7 @@ object Form33: TForm33
       Position.X = 168.000000000000000000
       Position.Y = 8.000000000000000000
       Size.Width = 101.000000000000000000
-      Size.Height = 30.000000000000000000
+      Size.Height = 28.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = 'listitembutton'
       TabOrder = 0
@@ -57,24 +57,6 @@ object Form33: TForm33
     StyleLookup = 'bottomtoolbar'
     TabOrder = 1
   end
-  object ksLoadingIndicator1: TksLoadingIndicator
-    Left = 216
-    Top = 120
-  end
-  object ProgressBar1: TProgressBar
-    Align = Top
-    Orientation = Horizontal
-    Margins.Left = 8.000000000000000000
-    Margins.Top = 8.000000000000000000
-    Margins.Right = 8.000000000000000000
-    Margins.Bottom = 8.000000000000000000
-    Position.X = 8.000000000000000000
-    Position.Y = 89.000000000000000000
-    Size.Width = 261.000000000000000000
-    Size.Height = 4.000000000000000000
-    Size.PlatformDefault = False
-    Value = 50.000000000000000000
-  end
   object Label1: TLabel
     Align = Top
     Margins.Left = 8.000000000000000000
@@ -88,12 +70,27 @@ object Form33: TForm33
     Size.PlatformDefault = False
     Text = 'Bytes read: '
   end
+  object ksProgressBar1: TksProgressBar
+    Align = Top
+    Size.Width = 261.000000000000000000
+    Size.Height = 20.000000000000000000
+    Size.PlatformDefault = False
+    Margins.Left = 8.000000000000000000
+    Margins.Right = 8.000000000000000000
+    Position.X = 8.000000000000000000
+    Position.Y = 81.000000000000000000
+    BackgroundColor = claWhite
+    Value = 0
+  end
   object ksNetHttpClient1: TksNetHttpClient
+    Asynchronous = False
+    ConnectionTimeout = 60000
+    ResponseTimeout = 60000
     AllowCookies = True
     HandleRedirects = True
     UserAgent = 'Embarcadero URI Client/1.0'
     OnReceiveData = ksNetHttpClient1ReceiveData
-    Left = 216
-    Top = 64
+    Left = 32
+    Top = 232
   end
 end

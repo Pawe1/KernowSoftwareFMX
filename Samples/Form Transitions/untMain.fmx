@@ -3,42 +3,16 @@ object Form3: TForm3
   Top = 0
   Caption = 'Form3'
   ClientHeight = 400
-  ClientWidth = 250
+  ClientWidth = 259
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
   DesignerMasterStyle = 2
-  object ksTableView1: TksTableView
-    Align = Client
-    BackgroundText.Font.Size = 18.000000000000000000
-    DeleteButton.Text = 'Delete'
-    DragDropOptions.Opacity = 1.000000000000000000
-    HeaderOptions.Color = claNull
-    HeaderOptions.StickyHeaders.Button.JumpToHeaderOptions.HeaderHeight = 32.000000000000000000
-    HeaderOptions.StickyHeaders.Button.JumpToHeaderOptions.ItemHeight = 32.000000000000000000
-    PullToRefresh.Font.Size = 16.000000000000000000
-    PullToRefresh.PullText = 'pull to refresh'
-    PullToRefresh.ReleaseText = 'release to refresh'
-    SelectionOptions.SelectionOverlay.Size = 0
-    Size.Width = 250.000000000000000000
-    Size.Height = 312.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 1
-    TextDefaults.Title.Font.Size = 13.000000000000000000
-    TextDefaults.Title.TextColor = claBlack
-    TextDefaults.SubTitle.Font.Size = 13.000000000000000000
-    TextDefaults.SubTitle.TextColor = claDodgerblue
-    TextDefaults.Detail.Font.Size = 13.000000000000000000
-    TextDefaults.Detail.TextColor = claDodgerblue
-    TextDefaults.Header.Font.Size = 13.000000000000000000
-    TextDefaults.Header.TextColor = claBlack
-    OnItemClick = ksTableView1ItemClick
-  end
   object ToolBar2: TToolBar
     Align = Bottom
     Position.Y = 356.000000000000000000
-    Size.Width = 250.000000000000000000
+    Size.Width = 259.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
@@ -1724,14 +1698,14 @@ object Form3: TForm3
     end
   end
   object ToolBar1: TToolBar
-    Size.Width = 250.000000000000000000
+    Size.Width = 259.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 4
     object Label1: TLabel
       Align = Contents
       StyledSettings = [Family, FontColor]
-      Size.Width = 250.000000000000000000
+      Size.Width = 259.000000000000000000
       Size.Height = 44.000000000000000000
       Size.PlatformDefault = False
       TextSettings.Font.Size = 14.000000000000000000
@@ -1739,14 +1713,19 @@ object Form3: TForm3
       Text = 'FIRST FORM'
     end
   end
-  object ksSlideMenu1: TksSlideMenu
-    Appearence.HeaderFontColor = claNull
-    Appearence.Theme = mtCustom
-    Font.Size = 14.000000000000000000
-    HeaderFont.Size = 16.000000000000000000
-    SlideSpeed = 0.200000002980232200
-    Toolbar.Font.Size = 14.000000000000000000
+  object ksVirtualListView1: TksVirtualListView
+    Align = Client
+    DeleteButton.Text = 'Delete'
+    NoItemsText.Font.Size = 18.000000000000000000
+    PullToRefresh.PullText = 'PULL TO REFRESH'
+    PullToRefresh.ReleaseText = 'RELEASE TO REFRESH'
+    Size.Width = 259.000000000000000000
+    Size.Height = 312.000000000000000000
+    Size.PlatformDefault = False
+    OnItemClick = ksVirtualListView1ItemClick
+  end
+  object ksFormTransition1: TksFormTransition
     Left = 112
-    Top = 184
+    Top = 252
   end
 end

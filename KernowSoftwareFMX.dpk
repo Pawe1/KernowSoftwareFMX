@@ -32,12 +32,11 @@ requires
   designide;
 
 contains
-  ksSlideMenu in 'ksSlideMenu.pas',
+  ksCommon in 'ksCommon.pas',
+  ksTypes in 'ksTypes.pas',
   ksSegmentButtons in 'ksSegmentButtons.pas',
   ksTableView in 'ksTableView.pas',
   ksMainMenu in 'ksMainMenu.pas',
-  ksListViewHelper in 'ksListViewHelper.pas',
-  ksFormTransition in 'ksFormTransition.pas',
   ksChatView in 'ksChatView.pas',
   ksTileMenu in 'ksTileMenu.pas',
   ksNetHttpClient in 'ksNetHttpClient.pas',
@@ -47,15 +46,23 @@ contains
   ksCameraViewer in 'ksCameraViewer.pas',
   ksTabControl in 'ksTabControl.pas',
   ksComponentEditors in 'ksComponentEditors.pas',
-  ksCommon in 'ksCommon.pas',
-  ksTypes in 'ksTypes.pas',
-  ksLoadingIndicator in 'ksLoadingIndicator.pas',
   ksVirtualListView in 'ksVirtualListView.pas',
-  ksSystemSound in 'ksSystemSound.pas',
   ksImageViewer in 'ksImageViewer.pas',
   ksProgressIndicator in 'ksProgressIndicator.pas',
-  ksCircleProgress in 'ksCircleProgress.pas';
+  ksCircleProgress in 'ksCircleProgress.pas',
+  ksLoadingIndicator in 'ksLoadingIndicator.pas',
+  ksSlideMenu in 'ksSlideMenu.pas',
+  ksSlideMenuUI in 'ksSlideMenuUI.pas',
+  ksFormTransition in 'ksFormTransition.pas',
+  ksFormTransitionUI in 'ksFormTransitionUI.pas' {frmFormTransitionUI},
+  ksAppEvents in 'ksAppEvents.pas',
+  ksToolbar in 'ksToolbar.pas',
+  ksPickers in 'ksPickers.pas',
+  ksMapView in 'ksMapView.pas',
+  ksProgressBar in 'ksProgressBar.pas';
 
 end.
+
+
 
 

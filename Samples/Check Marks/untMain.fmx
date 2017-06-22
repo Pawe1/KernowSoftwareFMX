@@ -3,7 +3,7 @@ object Form24: TForm24
   Top = 0
   Caption = 'Form24'
   ClientHeight = 406
-  ClientWidth = 307
+  ClientWidth = 329
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
@@ -12,37 +12,44 @@ object Form24: TForm24
   object ToolBar2: TToolBar
     Align = Bottom
     Position.Y = 362.000000000000000000
-    Size.Width = 307.000000000000000000
+    Size.Width = 329.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     StyleLookup = 'bottomtoolbar'
     TabOrder = 1
-    object ComboBox1: TComboBox
-      Items.Strings = (
-        'Left Aligned'
-        'Right Aligned')
+    object ksSegmentButtons1: TksSegmentButtons
+      Align = Client
       ItemIndex = 1
-      Position.X = 8.000000000000000000
-      Position.Y = 11.000000000000000000
-      Size.Width = 113.000000000000000000
-      Size.Height = 22.000000000000000000
+      Segments = <
+        item
+          ID = ''
+          Text = 'Left Aligned'
+          BadgeValue = 0
+        end
+        item
+          ID = ''
+          Text = 'Right Aligned'
+          BadgeValue = 0
+        end>
+      Size.Width = 248.000000000000000000
+      Size.Height = 44.000000000000000000
       Size.PlatformDefault = False
-      TabOrder = 0
-      OnChange = ComboBox1Change
+      OnSelectSegment = ksSegmentButtons1SelectSegment
     end
     object CheckBox1: TCheckBox
-      Position.X = 144.000000000000000000
-      Position.Y = 8.000000000000000000
-      Size.Width = 153.000000000000000000
-      Size.Height = 25.000000000000000000
+      Align = Right
+      Margins.Left = 8.000000000000000000
+      Position.X = 256.000000000000000000
+      Size.Width = 73.000000000000000000
+      Size.Height = 44.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
-      Text = 'Multi Select'
+      Text = 'Multi'
       OnChange = CheckBox1Change
     end
   end
   object ToolBar1: TToolBar
-    Size.Width = 307.000000000000000000
+    Size.Width = 329.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
@@ -50,7 +57,7 @@ object Form24: TForm24
       Align = Client
       StyledSettings = [Family, Style, FontColor]
       HitTest = True
-      Size.Width = 307.000000000000000000
+      Size.Width = 329.000000000000000000
       Size.Height = 44.000000000000000000
       Size.PlatformDefault = False
       TextSettings.Font.Size = 16.000000000000000000
@@ -62,9 +69,10 @@ object Form24: TForm24
     Align = Client
     CheckBoxes.Visible = True
     DeleteButton.Text = 'Delete'
+    NoItemsText.Font.Size = 18.000000000000000000
     PullToRefresh.PullText = 'Pull to refresh...'
     PullToRefresh.ReleaseText = 'Release to refresh'
-    Size.Width = 307.000000000000000000
+    Size.Width = 329.000000000000000000
     Size.Height = 318.000000000000000000
     Size.PlatformDefault = False
     object TScrollBar

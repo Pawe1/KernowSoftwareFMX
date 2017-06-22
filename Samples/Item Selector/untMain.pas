@@ -5,15 +5,18 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.StdCtrls,
-  FMX.Controls.Presentation, FMX.ListBox, ksTypes, ksTableView, ksSegmentButtons;
+  FMX.Controls.Presentation, FMX.ListBox, ksTypes, ksTableView, ksSegmentButtons,
+  ksVirtualListView;
 
 type
   TForm24 = class(TForm)
     ToolBar1: TToolBar;
     Label1: TLabel;
-    ksTableView1: TksTableView;
     ToolBar2: TToolBar;
+    ksVirtualListView1: TksVirtualListView;
     procedure FormCreate(Sender: TObject);
+    procedure ksVirtualListView1GetPickerItems(Sender: TObject;
+      ARow: TksVListItem; var ASelected: string; AItems: TStrings);
   private
 
     procedure PopulateList;
@@ -37,15 +40,31 @@ begin
   PopulateList;
 end;
 
-procedure TForm24.PopulateList;
-
+procedure TForm24.ksVirtualListView1GetPickerItems(Sender: TObject;
+  ARow: TksVListItem; var ASelected: string; AItems: TStrings);
 begin
-  ksTableView1.BeginUpdate;
+  if ARow.TagStr = 'CAR' then AItems.CommaText := 'BMW,Mercedes,Ferrari,Bugatti';
+  if ARow.TagStr = 'COLOUR' then AItems.CommaText := 'Red,Green,Yellow,Blue';
+end;
+
+procedure TForm24.PopulateList;
+var
+  AItem: TksVListItem;
+begin
+  ksVirtualListView1.BeginUpdate;
   try
-    ksTableView1.Items.AddItemSelector('Car', '', ['BMW', 'Mercedes', 'Ferrari', 'Bugatti']);
-    ksTableView1.Items.AddItemSelector('Colour', '', ['Red', 'Green', 'Yellow', 'Blue']);
+    AItem := ksVirtualListView1.Items.Add('Car', '', '', atMore); //[]
+    AItem.SelectorType := ksSelectorPicker;
+    AItem.TagStr := 'CAR';
+
+    AItem := ksVirtualListView1.Items.Add('Colour', '', '', atMore); // ['Red', 'Green', 'Yellow', 'Blue']);
+    AItem.SelectorType := ksSelectorPicker;
+    AItem.TagStr := 'COLOUR';
+
+    AItem := ksVirtualListView1.Items.Add('Date', '', '', atMore); // ['Red', 'Green', 'Yellow', 'Blue']);
+    AItem.SelectorType := ksSelectorDate;
   finally
-    ksTableView1.EndUpdate;
+    ksVirtualListView1.EndUpdate;
   end;
 end;
 

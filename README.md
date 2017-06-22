@@ -5,8 +5,10 @@ https://bitbucket.org/gmurt/kscomponents
 
 # KernowSoftwareFMX
 Kernow Software FMX Components for XE7, XE8 & XE10 Seattle. 
+# ksComponents
 
-(May work with earlier versions but untested)
+Kernow Software FMX Components for XE8, Delphi Berlin, Delphi Seattle and Delphi Tokyo.
+
 
 Firemonkey Slide menu, ListView and Segment buttons for Delphi.  Inherits from a non-visual component to keep things simple.
 

@@ -20,15 +20,16 @@ type
     Layout1: TLayout;
     ksSegmentButtons1: TksSegmentButtons;
     ksSegmentButtons2: TksSegmentButtons;
-    Button1: TButton;
-    Button2: TButton;
     ksSegmentButtons3: TksSegmentButtons;
+    Button3: TButton;
+    Button2: TButton;
     procedure FormCreate(Sender: TObject);
     procedure ksSegmentButtons1Change(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
     procedure ksSegmentButtons2Change(Sender: TObject);
     procedure ksSegmentButtons3SelectSegment(Sender: TObject; AIndex: Integer; AButton: TksSegmentButton);
+    procedure Label1Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -44,18 +45,20 @@ uses System.UIConsts;
 
 {$R *.fmx}
 
-procedure TForm24.Button1Click(Sender: TObject);
-var
-  AIcon: TksTabItemIcon;
-begin
-  AIcon := TksTabItemIcon(Random(Ord(High(TksTabItemIcon))));
-  ksTabControl1.AddTab.StandardIcon := AIcon;
-end;
 
 procedure TForm24.Button2Click(Sender: TObject);
 begin
   while ksTabControl1.Tabs.Count > 2 do
     ksTabControl1.Tabs.Delete(ksTabControl1.Tabs.Count-1);
+
+end;
+
+procedure TForm24.Button3Click(Sender: TObject);
+var
+  AIcon: TksTabItemIcon;
+begin
+  AIcon := TksTabItemIcon(Random(Ord(High(TksTabItemIcon))));
+  ksTabControl1.AddTab.StandardIcon := AIcon;
 end;
 
 procedure TForm24.FormCreate(Sender: TObject);
@@ -81,6 +84,7 @@ begin
   finally
     ksVirtualListView1.EndUpdate;
   end;
+
 end;
 
 procedure TForm24.ksSegmentButtons1Change(Sender: TObject);
@@ -114,4 +118,14 @@ begin
   end;
 end;
 
+procedure TForm24.Label1Click(Sender: TObject);
+begin
+  Button3.StaysPressed := True;
+  Button3.IsPressed := True;
+  Button3.StaysPressed := False;
+
+end;
+
 end.
+
+

@@ -2,9 +2,9 @@
 *                                                                              *
 *  TksTabControl - tab control component with badge support                    *
 *                                                                              *
-*  https://github.com/gmurt/KernowSoftwareFMX                                  *
+*  https://bitbucket.org/gmurt/kscomponents                                    *
 *                                                                              *
-*  Copyright 2015 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -87,7 +87,9 @@ type
     FTabIndex: integer;
     FText: string;
     FBadgeValue: integer;
+    FBadge: TBitmap;
     FHighlightStyle: TksTabBarHighlightStyle;
+    //FCachedBmp: TBitmap;
     procedure SetText(const Value: string);
     procedure SetBadgeValue(const Value: integer);
     procedure UpdateTabs;
@@ -97,19 +99,21 @@ type
     procedure SetHighlightStyle(const Value: TksTabBarHighlightStyle);
     procedure FadeOut(ADuration: single);
     procedure FadeIn(ADuration: single);
+    procedure SetBackground(const Value: TAlphaColor);
   public
     constructor Create(AOwner: TComponent); override;
-    procedure BeforeDestruction; override;
     destructor Destroy; override;
+    procedure BeforeDestruction; override;
     procedure DrawTab(ACanvas: TCanvas; AIndex: integer; ARect: TRectF);
+    procedure RedrawBadge;
   published
     property Text: string read FText write SetText;
-    property BadgeValue: integer read FBadgeValue write SetBadgeValue;
+    property BadgeValue: integer read FBadgeValue write SetBadgeValue default 0;
     property Icon: TBitmap read FIcon write SetIcon;
     property StandardIcon: TksTabItemIcon read FIconType write SetIconType;
     property TabIndex: integer read FTabIndex write SetTabIndex;// stored False;
     property HighlightStyle: TksTabBarHighlightStyle read FHighlightStyle write SetHighlightStyle default ksTbHighlightSingleColor;
-    property Background: TAlphaColor read FBackground write FBackground default claNull;
+    property Background: TAlphaColor read FBackground write SetBackground default claWhite;
   end;
 
   TksTabItemList = class(TObjectList<TksTabItem>)
@@ -180,6 +184,7 @@ type
     property Tabs: TksTabItemList read FTabs;
     property SelectedTab: TksTabItem read GetSelectedTab;
     procedure FadeToNextTab(const ADelaySeconds: single = 0.5);
+    procedure FadeToPrevTab(const ADelaySeconds: single = 0.5);
     procedure FadeToTab(ATab: TksTabItem; const ADelaySeconds: single = 0.5);
   published
     property Align;
@@ -200,13 +205,11 @@ type
 
   {$R *.dcr}
 
-
   procedure Register;
-
 
 implementation
 
-uses SysUtils,  Math, FMX.Forms, ksCommon, TypInfo, FMX.Ani, fmx.dialogs;
+uses SysUtils, Math, FMX.Forms, ksCommon, TypInfo, FMX.Ani;
 
 procedure Register;
 begin
@@ -226,6 +229,7 @@ end;
 constructor TksTabItem.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  //FCachedBmp := TBitmap.Create;
   FIcon := TBitmap.Create;
   ClipChildren := True;
   Stored := True;
@@ -233,31 +237,59 @@ begin
   HitTest := False;
   Text := Name;
   FHighlightStyle := ksTbHighlightSingleColor;
-  FBackground := claNull;
+  FBackground := claWhite;
+  FBadgeValue := 0;
 end;
 
 destructor TksTabItem.Destroy;
 begin
-
+  //FreeAndNil(FCachedBmp);
   FreeAndNil(FIcon);
   inherited;
 end;
 
 
 procedure TksTabItem.DrawTab(ACanvas: TCanvas; AIndex: integer; ARect: TRectF);
+
+procedure DrawEllipse(ACanvas: TCanvas; ARect: TRectF; AColor: TAlphaColor);
+  begin
+    ACanvas.Fill.Color := AColor;
+    ACanvas.FillEllipse(ARect, 1);
+    ACanvas.Stroke.Color := AColor;
+    ACanvas.Stroke.Thickness := 1;
+    ACanvas.DrawEllipse(ARect, 1);
+  end;
+
 var
   AAppearence: TksTabBarAppearence;
   ABmp: TBitmap;
   ADestRect: TRectF;
+  r: TRectF;
+  ABadgeRect: TRectF;
 begin
+  r := ARect;
+
   AAppearence := TksTabControl(Parent).Appearence;
-  InflateRect(ARect, 0, -3);
+  InflateRect(r, 0, -3);
+
+  ACanvas.Font.Size := 11;
   ACanvas.Fill.Color := AAppearence.NormalColor;
 
   if AIndex = TksTabControl(Parent).TabIndex then
     ACanvas.Fill.Color := AAppearence.SelectedColor;
-  ACanvas.Font.Size := 11;
-  ACanvas.FillText(ARect, FText, False, 1, [], TTextAlign.Center, TTextAlign.Trailing);
+
+
+  ACanvas.FillText(r, FText, False, 1, [], TTextAlign.Center, TTextAlign.Trailing);
+
+  ADestRect := RectF(0, 0, 22, 22);
+  OffsetRect(ADestRect, ARect.Left + ((ARect.Width - ADestRect.Width) / 2), 4);
+
+ { if (AIndex = TksTabControl(Parent).TabIndex) then
+    ReplaceOpaqueColor(FIcon, AAppearence.SelectedColor)
+  else
+    ReplaceOpaqueColor(FIcon, AAppearence.NormalColor);
+  //   }
+
   ABmp := TBitmap.Create;
   try
     ABmp.Assign(FIcon);
@@ -276,19 +308,23 @@ begin
       if (AIndex <> TksTabControl(Parent).TabIndex) then
         ReplaceOpaqueColor(ABmp, AAppearence.NormalColor);
     end;
-    ADestRect := RectF(0, 0, 22, 22);
-    OffsetRect(ADestRect, ARect.Left + ((ARect.Width - ADestRect.Width) / 2), 4);
-    ACanvas.DrawBitmap(ABmp, RectF(0, 0, ABmp.Width, ABmp.Height), ADestRect, 1, True);
 
-    if FBadgeValue > 0 then
+
+    ACanvas.DrawBitmap(ABmp, RectF(0,0,ABmp.Width,ABmp.Height), ADestRect, 1, True);
+
+
+    if (FBadgeValue <> 0) and (FBadge <> nil) then
     begin
-      GenerateBadge(ACanvas,
-                    PointF(ADestRect.Right-7, ADestRect.Top-2),
-                    FBadgeValue,
-                    AAppearence.BadgeColor,
-                    AAppearence.BackgroundColor,
-                    claWhite);
+      ABadgeRect := RectF(ADestRect.Left, ADestRect.Top, ADestRect.Left+ 16, ADestRect.Top+16);
+      OffsetRect(ABadgeRect, ADestRect.Width-7, -2);
+
+      ACanvas.DrawBitmap(FBadge, RectF(0, 0, FBadge.Width, FBadge.Height), ABadgeRect, 1);
+      ACanvas.Fill.Color := claWhite;
+      ACanvas.Font.Size := 9;
+      if FBadgeValue > 0 then
+        ACanvas.FillText(ABadgeRect, IntToStr(FBadgeValue), False, 1, [], TTextAlign.Center);
     end;
+
   finally
     FreeAndNil(ABmp);
   end;
@@ -302,6 +338,32 @@ end;
 procedure TksTabItem.FadeOut(ADuration: single);
 begin
   TAnimator.AnimateFloatWait(Self, 'Opacity', 0, ADuration);
+end;
+
+procedure TksTabItem.RedrawBadge;
+var
+  s: single;
+begin
+  if FBadgeValue = 0 then
+    FreeAndNil(FBadge)
+  else
+  begin
+    s := GetScreenScale(False);
+    FBadge := TBitmap.Create(Round(32*s), Round(32*s));
+    FBadge.Clear(claNull);
+    FBadge.Canvas.Fill.Color := claRed;
+    FBadge.Canvas.Fill.Kind := TBrushKind.Solid;
+    FBadge.Canvas.BeginScene;
+    try
+      FBadge.Canvas.FillEllipse(RectF(0, 0, FBadge.Width, FBadge.Height), 1);
+    finally
+      FBadge.Canvas.EndScene;
+    end;
+     {GenerateBadge(fb,
+                            TksTabControl(Parent).Appearence.BadgeColor,
+                            TksTabControl(Parent).Appearence.BackgroundColor,
+                            claWhite); }
+  end;
 end;
 
 procedure TksTabItem.SetIconType(const Value: TksTabItemIcon);
@@ -326,11 +388,21 @@ end;
 
 
 
+procedure TksTabItem.SetBackground(const Value: TAlphaColor);
+begin
+  if FBackground <> Value then
+  begin
+    FBackground := Value;
+    TksTabControl(Parent).Repaint;
+  end;
+end;
+
 procedure TksTabItem.SetBadgeValue(const Value: integer);
 begin
   if FBadgeValue <> Value then
   begin
     FBadgeValue := Value;
+    RedrawBadge;
     UpdateTabs;
   end;
 end;
@@ -626,6 +698,12 @@ begin
     FadeToTab(Tabs[TabIndex+1], ADelaySeconds);
 end;
 
+procedure TksTabControl.FadeToPrevTab(const ADelaySeconds: single = 0.5);
+begin
+  if TabIndex > 0 then
+    FadeToTab(Tabs[TabIndex-1], ADelaySeconds);
+end;
+
 procedure TksTabControl.FadeToTab(ATab: TksTabItem; const ADelaySeconds: single = 0.5);
 var
   APrevTab: TksTabItem;
@@ -673,6 +751,8 @@ begin
       ksTbpTop: FTabBar.Align := TAlignLayout.Top;
     end;
     ATab := Tabs[ICount];
+    //ATab.FCachedBmp.SetSize(0, 0);
+    ATab.RedrawBadge;
     ATab.FTabIndex := ICount;
     ATab.Width := Self.Width;
     case FTabPosition of
@@ -690,6 +770,9 @@ begin
     ATab.Realign;
   end;
   InvalidateRect(ClipRect);
+  {$IFDEF ANDROID}
+  Application.ProcessMessages;
+  {$ENDIF}
 end;
 
 { TksTabBar }
@@ -759,13 +842,18 @@ begin
       if (csDesigning in ComponentState) then
         DrawDesignBorder(claDimgray, claDimgray);
 
+
       case ATabControl.TabPosition of
         ksTbpBottom: DrawRectSides(ARect, 0, 0, AllCorners,1, [TSide.Top]);
         ksTbpTop: DrawRectSides(ARect, 0, 0, AllCorners,1, [TSide.Bottom]);
       end;
 
       for ICount := 0 to TksTabControl(FTabControl).GetTabCount-1 do
+      begin
+        //if ATabControl.Tabs[ICount].Visible then
         ATabControl.Tabs[ICount].DrawTab(Canvas, ICount, ATabControl.GetTabRect(ICount));
+      end;
+
     finally
       RestoreState(AState);
       Font.Size := 10;
@@ -778,7 +866,8 @@ end;
 
 procedure TksTabBarAppearence.Changed;
 begin
-  TksTabControl(FTabControl).Repaint;
+  TksTabControl(FTabControl).UpdateTabs;
+  //TksTabControl(FTabControl).Repaint;
 end;
 
 constructor TksTabBarAppearence.Create(ATabControl: TksTabControl);
@@ -869,6 +958,7 @@ begin
   if (Action = TCollectionNotification.cnRemoved) and (not (csDesigning in FTabControl.ComponentState)) then
   begin
     Value.DisposeOf;
+    FTabControl.UpdateTabs;
   end;
 end;
 

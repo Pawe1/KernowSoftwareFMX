@@ -2,9 +2,9 @@
 *                                                                              *
 *  TksSlideMenu - Slide Menu Component                                         *
 *                                                                              *
-*  https://github.com/gmurt/KernowSoftwareFMX                                  *
+*  https://bitbucket.org/gmurt/kscomponents                                    *
 *                                                                              *
-*  Copyright 2015 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -33,14 +33,14 @@ interface
 
 uses System.UITypes, FMX.Controls, FMX.Layouts, FMX.Objects, System.Classes,
   FMX.Types, Generics.Collections, FMX.Graphics, System.UIConsts, FMX.Effects,
-  FMX.StdCtrls, System.Types, FMX.Forms, {ksTableView,} ksVirtualListView, ksTypes
+  FMX.StdCtrls, System.Types, FMX.Forms, {ksTableView,} ksVirtualListView, ksTypes, ksSlideMenuUI
   {$IFDEF XE8_OR_NEWER}
   ,FMX.ImgList
   {$ENDIF}
   ;
 
 const
-  C_DEFAULT_MENU_WIDTH = 250;
+  C_DEFAULT_MENU_WIDTH = 220;
   C_DEFAULT_MENU_TOOLBAR_HEIGHT = 44;
 
   C_DEFAULT_MENU_HEADER_HEIGHT = 30;
@@ -60,40 +60,14 @@ const
   C_DEFAULT_MENU_TOOLBAR_COLOR = claWhite;
 
 type
-  TSelectMenuItemEvent = procedure(Sender: TObject; AId: string) of object;
-
+  TksSlideMenu = class;
+  TksSlideMenuItemList = class;
   TksMenuPosition = (mpLeft, mpRight);
   TKsMenuStyle = (msOverlap, msReveal);
   TKsMenuTheme = (mtCustom, mtDarkGray, mtDarkBlue, mtDarkOrange, mtDarkGreen, mtLightGray, mtLightBlue, mtLightOrange, mtLightGreen);
 
-  TksSlideMenu = class;
-
-  TksSlideMenuItem = class
-  strict private
-    FText: string;
-    FId: string;
-    FFont: TFont;
-    FImage: TBitmap;
-    FHeight: integer;
-    FIndex: integer;
-    FIsHeader: Boolean;
-  public
-    constructor Create(AIndex: integer); virtual;
-    destructor Destroy; override;
-    property Height: integer read FHeight write FHeight;
-    property Index: integer read FIndex;
-    property Font: TFont read FFont write FFont;
-    property Image: TBitmap read FImage write FImage;
-    property ID: string read FId write FId;
-    property Text: string read FText write FText;
-    property IsHeader: Boolean read FIsHeader write FIsHeader;
-  end;
-
-  TksSlideMenuItems = class(TObjectList<TksSlideMenuItem>)
-  private
-    function AddMenuItem(AId, AText: string; AImage: TBitmap): TksSlideMenuItem;
-    function AddHeaderItem(AText: string): TksSlideMenuItem;
-  end;
+  TBuildMenuEvent = procedure(Sender: TObject; AItems: TksSlideMenuItemList) of object;
+  TSelectMenuItemEvent = procedure(Sender: TObject; AId: string) of object;
 
   TksSlideMenuAppearence = class(TPersistent)
   private
@@ -133,1003 +107,71 @@ type
     property Theme: TKsMenuTheme read FTheme write SetTheme default mtDarkGray;
   end;
 
-
-  TksSlideMenuToolbar = class(TPersistent)
-  private
-    [weak]FSlideMenu: TksSlideMenu;
-    FHeader: TImage;
-    FBitmap: TBitmap;
+  TksSlideMenuItem = class
+    FID: string;
     FText: string;
-    FFont: TFont;
-    FVisible: Boolean;
-    FHeight: integer;
-    procedure SetFont(const Value: TFont);
-    procedure SetBitmap(const Value: TBitmap);
-    function GetBitmap: TBitmap;
-    function GetFont: TFont;
-    function GetText: string;
-    procedure SetText(const Value: string);
-
-  public
-    constructor Create(AOwner: TComponent; ASlideMenu: TksSlideMenu); virtual;
-    destructor Destroy; override;
-    procedure UpdateToolbar;
-    property Height: integer read FHeight default  C_DEFAULT_MENU_TOOLBAR_HEIGHT;
-  published
-    property Bitmap: TBitmap read GetBitmap write SetBitmap;
-    property Visible: Boolean read FVisible write FVisible default True;
-    property Text: string read GetText write SetText;
-    property Font: TFont read GetFont write SetFont;
+    FBitmap: TBitmap;
+    FForm: TCommonCustomForm;
+    FIcon: TksStandardIcon;
   end;
 
-
-  TksSlideMenuContainer = class(TLayout)
-  private
-    [weak]FSlideMenu: TksSlideMenu;
-    FToolBar: TksSlideMenuToolbar;
-    FListView: TksVirtualListView;
-    procedure CreateListView;
-    //function CalculateListViewHeight: single;
-    procedure ItemClick(Sender: TObject; AItem: TksVListItem);
+  TksSlideMenuItemList = class(TObjectList<TksSlideMenuItem>)
   public
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
-    property ListView: TksVirtualListView read FListView;
+    procedure AddItem(AID, AText: string; AForm: TCommonCustomForm; const AIcon: TksStandardIcon = Custom; const ABmp: TBitmap = nil);
   end;
+
+  //TksSlideMenuState = (ksMsOpening, ksMsOpen, ksMsClosing, ksMsClosed);
 
   [ComponentPlatformsAttribute(pidWin32 or pidWin64 or
     {$IFDEF XE8_OR_NEWER} pidiOSDevice32 or pidiOSDevice64
     {$ELSE} pidiOSDevice {$ENDIF} or pidiOSSimulator or pidAndroid)]
-  TksSlideMenu = class(TksComponent)
-  strict private
+
+  TksSlideMenu = class(TComponent)
+  private
+    FInitalizedForms: TList<TCommonCustomForm>;
+    FItems: TksSlideMenuItemList;
+    FCallingForm: TCommonCustomForm;
+    FMenuForm: TfrmSlideMenuUI;
     FAppearence: TksSlideMenuAppearence;
-    FMenu: TksSlideMenuContainer;
-    FItems: TksSlideMenuItems;
-    {$IFNDEF ANDROID}
-    FShadowLeft: TImage;
-    FShadowRight: TImage;
-    {$ENDIF}
-    FBackground: TRectangle;
-    FFormImage: TImage;
-    FMenuImage: TImage;
-    FFont: TFont;
-    FHeaderFont: TFont;
-    FShowing: Boolean;
-    FTopPadding: integer;
-    FMenuPosition: TksMenuPosition;
-    FMenuStyle: TKsMenuStyle;
-    FSlideSpeed: Single;
     FOnSelectMenuItemEvent: TSelectMenuItemEvent;
     FAfterSelectMenuItemEvent: TSelectMenuItemEvent;
-    FOnAfterSlideOut: TNotifyEvent;
-    FOnBeforeSlideOut: TNotifyEvent;
-    {$IFDEF XE8_OR_NEWER}
-    FImages: TCustomImageList;
-    {$ENDIF}
-    FHeaderHeight: integer;
-    FItemHeight: integer;
-    FToggleButton: TCustomButton;
-    FAnimating: Boolean;
+    FOnBuildMenu: TBuildMenuEvent;
+    procedure RebuildMenu;
+    procedure SelectItem(Sender: TObject; AItem: TksVListItem);
 
-    FHeaderTextAlign: TTextAlign;
-    FItemTextAlign: TTextAlign;
-    FSelectFirstItem: Boolean;
-
-    FBeforeShow: TNotifyEvent;
-    FAfterShow: TNotifyEvent;
-    FBeforeHide: TNotifyEvent;
-    FAfterHide: TNotifyEvent;
-    procedure SetTopPadding(const Value: integer);
-    procedure DoBackgroundClick(Sender: TObject);
-    //procedure FadeBackground;
-    //procedure UnfadeBackground;
-    procedure GenerateFormImage(AXpos: single);
-    procedure RemoveFormImage;
-    {$IFNDEF ANDROID}
-    procedure GenerateShadows;
-    {$ENDIF}
-    procedure HidePickers;
-    procedure SetToggleButton(const Value: TCustomButton);
-    procedure DoToggleButtonClick(Sender: TObject);
-
-
-  private
-    FMenuIndex: integer;
-    procedure MenuItemSelected(Sender: TObject; AItem: TksVListItem);
-    //procedure SetItemIndex(const Value: integer);
-    procedure SwitchMenuToImage;
-    procedure SwitchImageToMenu;
-    function GetToolbar: TksSlideMenuToolbar;
-    //function GetToolbarHeight: integer;
-    procedure SetToolbar(const Value: TksSlideMenuToolbar);
-    procedure SetMenuIndex(const Value: integer);
-    function GetMenuItemCount: integer;
-    function GetColorOrDefault(AColor, ADefaultIfNull: TAlphaColor): TAlphaColor;
-    procedure UpdateSelectedItem;
-  protected
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Clear;
-    procedure AddHeader(AText: string);
-    function AddMenuItem(AId, AText: string; const AImageIndex: integer = -1): TksSlideMenuItem; overload;
-    function AddMenuItem(AId, AText: string; AImage: TBitmap): TksSlideMenuItem; overload;
-    procedure ToggleMenu;
-    procedure UpdateMenu;
-    procedure RefreshMenu;
-    property Showing: Boolean read FShowing;
-    property MenuIndex: integer read FMenuIndex write SetMenuIndex;
-    property MenuItemCount: integer read GetMenuItemCount;
+    procedure AddMenuItem(AID, AText: string; const AForm: TCommonCustomForm = nil; const AIcon: TksStandardIcon = Custom); deprecated 'Use OnBuildMenu event instead';
+    procedure OpenMenu(ACallingForm: TCommonCustomForm);
   published
     property Appearence: TksSlideMenuAppearence read FAppearence write FAppearence;
-    property Font: TFont read FFont write FFont;
-    property HeaderFont: TFont read FHeaderFont write FHeaderFont;
-    {$IFDEF XE8_OR_NEWER}
-    property Images: TCustomImageList read FImages write FImages;
-    {$ENDIF}
-    property ItemHeight: integer read FItemHeight write FItemHeight default C_DEFAULT_MENU_ITEM_HEIGHT;
-    property HeaderHeight: integer read FHeaderHeight write FHeaderHeight default C_DEFAULT_MENU_HEADER_HEIGHT;
-    property TopPadding: integer read FTopPadding write SetTopPadding default 0;
-    property MenuPosition: TksMenuPosition read FMenuPosition write FMenuPosition default mpLeft;
-    property MenuStyle: TKsMenuStyle read FMenuStyle write FMenuStyle default msReveal;
-    property SlideSpeed: Single read FSlideSpeed write FSlideSpeed;
     property OnSelectMenuItemEvent: TSelectMenuItemEvent read FOnSelectMenuItemEvent write FOnSelectMenuItemEvent;
     property AfterSelectItemEvent: TSelectMenuItemEvent read FAfterSelectMenuItemEvent write FAfterSelectMenuItemEvent;
-    property Toolbar: TksSlideMenuToolbar read GetToolbar write SetToolbar;
-    property ToggleButton: TCustomButton read FToggleButton write SetToggleButton;
-    property OnAfterSlideOut: TNotifyEvent read FOnAfterSlideOut write FOnAfterSlideOut;
-    property OnBeforeSlideOut: TNotifyEvent read FOnBeforeSlideOut write FOnBeforeSlideOut;
-    property HeaderTextAlign: TTextAlign read FHeaderTextAlign write FHeaderTextAlign default TTextAlign.Leading;
-    property ItemTextAlign: TTextAlign read FItemTextAlign write FItemTextAlign default TTextAlign.Leading;
-    property SelectFirstItem: Boolean read FSelectFirstItem write FSelectFirstItem default True;
-
-    property BeforeShow: TNotifyEvent read FBeforeShow write FBeforeShow;
-    property AfterShow: TNotifyEvent read FAfterShow write FAfterShow;
-    property BeforeHide: TNotifyEvent read FBeforeHide write FBeforeHide;
-    property AfterHide: TNotifyEvent read FAfterHide write FAfterHide;
-
+    property OnBuildMenu: TBuildMenuEvent read FOnBuildMenu write FOnBuildMenu;
   end;
 
-  {$R *.dcr}
+  //{$R *.dcr}
 
   procedure Register;
-  procedure ReplaceOpaqueColor(ABmp: TBitmap; Color : TAlphaColor);
-
-var
-  SlideMenuAnimating: Boolean;
 
 
 
 implementation
 
-uses FMX.Platform, SysUtils, FMX.Ani, FMX.Pickers, Math,
-  FMX.ListView.Types, FMX.Utils, ksCommon;
-
+uses SysUtils, ksCommon, System.TypInfo, ksLoadingIndicator;
 
 procedure Register;
 begin
   RegisterComponents('Kernow Software FMX', [TksSlideMenu]);
 end;
 
-procedure ReplaceOpaqueColor(ABmp: TBitmap; Color : TAlphaColor);
-var
-  x,y: Integer;
-  AMap: TBitmapData;
-  PixelColor: TAlphaColor;
-  PixelWhiteColor: TAlphaColor;
-  C: PAlphaColorRec;
-begin
-  if ABmp.Map(TMapAccess.ReadWrite, AMap) then
-  try
-    AlphaColorToPixel(Color   , @PixelColor, AMap.PixelFormat);
-    AlphaColorToPixel(claWhite, @PixelWhiteColor, AMap.PixelFormat);
-    for y := 0 to ABmp.Height - 1 do
-    begin
-      for x := 0 to ABmp.Width - 1 do
-      begin
-        C := @PAlphaColorArray(AMap.Data)[y * (AMap.Pitch div 4) + x];
-        if (C^.Color<>claWhite) and (C^.A>0) then
-          C^.Color := PremultiplyAlpha(MakeColor(PixelColor, C^.A / $FF));
-      end;
-    end;
-  finally
-    ABmp.Unmap(AMap);
-  end;
-end;
-
-{ TSlideMenu }
-
-procedure TksSlideMenu.AddHeader(AText: string);
-var
-  AResult: TksSlideMenuItem;
-begin
-  AResult := FItems.AddHeaderItem(AText);
-  AResult.Font.Assign(FFont);
-end;
-
-
-function TksSlideMenu.AddMenuItem(AId, AText: string; AImage: TBitmap): TksSlideMenuItem;
-begin
-  Result := FItems.AddMenuItem(AId, AText, AImage);
-  Result.Font.Assign(FFont);
-  //UpdateMenu;
-end;
-
-function TksSlideMenu.AddMenuItem(AId, AText: string; const AImageIndex: integer = -1): TksSlideMenuItem;
-var
-  AImage: TBitmap;
-  ASize: TSizeF;
-begin
-  AImage := nil;
-  ASize.Width := 64;
-  ASize.Height := 64;
-  {$IFDEF XE8_OR_NEWER}
-  if Images <> nil then
-    AImage := Images.Bitmap(ASize, AImageIndex);
-  {$ENDIF}
-  Result := AddMenuItem(AId, AText, AImage);
-end;
-
-
-procedure TksSlideMenu.Clear;
-begin
-  FItems.Clear;
-  UpdateMenu;
-end;
-
-constructor TksSlideMenu.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-  FFont := TFont.Create;
-  FHeaderFont := TFont.Create;
-  FItems := TksSlideMenuItems.Create;
-  FAppearence := TksSlideMenuAppearence.Create(Self);
-  FMenu := TksSlideMenuContainer.Create(Self);
-  FFormImage := TImage.Create(Self);
-  FBackground := TRectangle.Create(Self);
-
-  FHeaderTextAlign := TTextAlign.Leading;
-  FItemTextAlign := TTextAlign.Leading;
-
-  FShowing := False;
-  FTopPadding := 0;
-  FFont.Size := C_DEFAULT_MENU_FONT_SIZE;
-  FHeaderFont.Size := C_DEFAULT_MENU_HEADER_FONT_SIZE;
-  FFormImage.OnClick := DoBackgroundClick;
-  FMenuPosition := mpLeft;
-  FMenuStyle := msReveal;
-  FSlideSpeed := C_DEFAULT_MENU_SLIDE_SPEED;
-  FHeaderHeight := C_DEFAULT_MENU_HEADER_HEIGHT;
-  FItemHeight := C_DEFAULT_MENU_ITEM_HEIGHT;
-  //FItemIndex := -1;
-
-  {$IFNDEF ANDROID}
-  FShadowLeft := TImage.Create(Self);
-  FShadowRight := TImage.Create(Self);
-  GenerateShadows;
-  FSelectFirstItem := True;
-  {$ENDIF}
-  FAnimating := False;
-  FMenuIndex := -1;
-end;
-
-destructor TksSlideMenu.Destroy;
-begin
-  FreeAndNil(FFont);
-  FreeAndNil(FHeaderFont);
-  FreeAndNil(FAppearence);
-  FreeAndNil(FItems);
-  inherited;
-end;
-
-
-procedure TksSlideMenu.DoBackgroundClick(Sender: TObject);
-begin
-  ToggleMenu;
-end;
-
-procedure TksSlideMenu.DoToggleButtonClick(Sender: TObject);
-begin
-  ToggleMenu;
-end;
-
-procedure TksSlideMenu.GenerateFormImage(AXpos: single);
-var
-  AScale: single;
-  ABmp: TBitmap;
-  ABmp2: TBitmap;
-  AForm: TForm;
-  AOwner : TComponent;
-  AWidth : single;
-  AHeight: single;
-  ATopLeft : TPointF;
-  //AFormTopLeft : TPointF;
-begin
-  AOwner := Owner;
-  if (AOwner is TForm) then
-  begin
-    AWidth   := (AOwner as TForm).Width;
-    AHeight  := (AOwner as TForm).Height;
-    ATopLeft := PointF(0,0);
-  end
-  else if (AOwner is TFrame) then
-  begin
-    AWidth   := (AOwner as TFrame).Width;
-    AHeight  := (AOwner as TFrame).Height;
-    ATopLeft := PointF(0,0);
-
-    while not (AOwner is TForm) do
-    begin
-      ATopLeft := ATopLeft + (AOwner as TFrame).LocalToAbsolute(PointF(0,0));
-      AOwner   := AOwner.Owner;
-    end;
-
-    if not (AOwner is TForm) then
-      exit;
-  end
-  else
-    exit;
-
-  AForm := (AOwner as TForm);
-  FFormImage.Visible := false;
-
-  FMenu.Visible := False;
-  ABmp := TBitmap.Create;
-  try
-    AScale := GetScreenScale;
-    ABmp.BitmapScale := AScale;
-    ABmp.Width  := Round((ATopLeft.x + AWidth ) * AScale);
-    ABmp.Height := Round((ATopLeft.y + AHeight) * AScale);
-    ABmp.Canvas.BeginScene;
-    AForm.PaintTo(ABmp.Canvas);
-    ABmp.Canvas.EndScene;
-    ABmp.Canvas.BeginScene;
-    ABmp.Canvas.Stroke.Color := claBlack;
-    ABmp.Canvas.StrokeThickness := 1;
-    ABmp.Canvas.DrawLine(PointF(0, 0), PointF(0, ABmp.Height), 1);
-    {ABmp.Canvas.Fill.Color := claFuchsia;
-    ABmp.Canvas.FillEllipse(RectF(0, 0, 100, 100), 1);}
-    ABmp.Canvas.EndScene;
-
-    if (ATopLeft.x>0) or (ATopLeft.y>0) then
-    begin
-      ABmp2 := TBitmap.Create;
-      ABmp2.BitmapScale := AScale;
-      ABmp2.Width  := Round(AWidth  * AScale);
-      ABmp2.Height := Round(AHeight * AScale);
-      ABmp2.Canvas.BeginScene;
-      ABmp2.Canvas.DrawBitmap(ABmp,
-                              RectF(Round(ATopLeft.x * AScale),Round(ATopLeft.y * AScale),ABmp.Width,ABmp.Height),
-                              RectF(0,0,AWidth,AHeight),
-                              1,true);
-      ABmp2.Canvas.EndScene;
-
-      ABmp.Free();
-      ABmp := ABmp2;
-    end;
-
-    FFormImage.Width := Round(AWidth);
-    FFormImage.Height := Round(AHeight);
-    FFormImage.Bitmap.Assign(ABmp);
-  finally
-    FreeAndNil(ABmp);
-  end;
-
-  FFormImage.Position.Y := 0;
-  FFormImage.Position.X := AXpos;
-
-  {$IFNDEF ANDROID}
-  FShadowLeft.Position.Y := 0;
-  FShadowLeft.Position.X := 0-FShadowLeft.Width;
-  FFormImage.AddObject(FShadowLeft);
-
-  FShadowRight.Position.Y := 0;
-  FShadowRight.Position.X := FFormImage.Width;
-  FFormImage.AddObject(FShadowRight);
-
-  {$ENDIF}
-
-  TfmxObject(Owner).AddObject(FFormImage);
-  FFormImage.Visible := True;
-  FMenu.Visible := True;
-  Application.ProcessMessages;
-end;
-
-procedure TksSlideMenu.RefreshMenu;
-var
-  AWidth: single;
-begin
-  if (FAnimating) or (not FShowing) then
-    Exit;
-
-  if (Owner is TForm) then
-    AWidth := (Owner as TForm).Width
-  else
-  if (Owner is TFrame) then
-    AWidth := (Owner as TFrame).Width
-  else
-    AWidth := 0;
-
-  HidePickers;
-
-  GenerateFormImage(FFormImage.Position.x);
-
-  if (Owner is TForm) then
-    FMenu.Height := (Owner as TForm).ClientHeight
-  else
-  if (Owner is TFrame) then
-    FMenu.Height := (Owner as TFrame).Height
-  else
-    FMenu.Height := 0;
-
-  case FMenuPosition of
-    mpLeft: FMenu.Position.x := 0;
-    mpRight:FMenu.Position.x := AWidth - C_DEFAULT_MENU_WIDTH;
-  end;
-
-  if FMenu.FListView.Items.Count = 0 then
-    UpdateMenu;
-end;
-
-procedure TksSlideMenu.RemoveFormImage;
-begin
-  (Owner as TfmxObject).RemoveObject(FFormImage);
-end;
-
-{$IFNDEF ANDROID}
-
-procedure TksSlideMenu.GenerateShadows;
-{var
-  AScale: single;
-  ABmp: TBitmap;
-  AHeight : Single;}
-begin
-{  if (Owner is TForm) then
-    AHeight := (Owner as TForm).Height
-  else if (Owner is TFrame) then
-    AHeight := (Owner as TFrame).Height
-  else
-    exit;
-
-  ABmp := TBitmap.Create;
-  try
-    AScale := GetScreenScale;
-    ABmp.Width := Round(16 * AScale);
-    ABmp.Height := Round(AHeight * AScale);
-    ABmp.Canvas.BeginScene;
-    ABmp.Canvas.Fill.Kind := TBrushKind.Gradient;
-    ABmp.Canvas.Fill.Gradient.Color := claNull;
-    ABmp.Canvas.Fill.Gradient.Color1 := $AA000000;
-    ABmp.Canvas.Fill.Gradient.StartPosition.X := 0;
-    ABmp.Canvas.Fill.Gradient.StartPosition.Y := 1;
-    ABmp.Canvas.Fill.Gradient.StopPosition.X := 1;
-    ABmp.Canvas.FillRect(RectF(0, 0, ABmp.Width, ABmp.Height), 0, 0, [], 1);
-    ABmp.Canvas.EndScene;
-    FShadowLeft.Width := 16;
-    FShadowLeft.Height := Round(AHeight);
-    FShadowLeft.Bitmap.Assign(ABmp);
-  finally
-    FreeAndNil(ABmp);
-  end;
-
-  ABmp := TBitmap.Create;
-  try
-    AScale := GetScreenScale;
-    ABmp.Width := Round(16 * AScale);
-    ABmp.Height := Round(AHeight * AScale);
-    ABmp.Canvas.BeginScene;
-    ABmp.Canvas.Fill.Kind := TBrushKind.Gradient;
-    ABmp.Canvas.Fill.Gradient.Color := $AA000000;
-    ABmp.Canvas.Fill.Gradient.Color1 := claNull;
-    ABmp.Canvas.Fill.Gradient.StartPosition.X := 0;
-    ABmp.Canvas.Fill.Gradient.StartPosition.Y := 1;
-    ABmp.Canvas.Fill.Gradient.StopPosition.X := 1;
-    ABmp.Canvas.FillRect(RectF(0, 0, ABmp.Width, ABmp.Height), 0, 0, [], 1);
-    ABmp.Canvas.EndScene;
-    FShadowRight.Width := 16;
-    FShadowRight.Height := Round(AHeight);
-    FShadowRight.Bitmap.Assign(ABmp);
-  finally
-    FreeAndNil(ABmp);
-  end; }
-end;
-
-{$ENDIF}
-
-function TksSlideMenu.GetMenuItemCount: integer;
-var
-  ICount: integer;
-  lv: TksVirtualListView;
-begin
-  Result := 0;
-  lv := FMenu.FListView;
-  for ICount := 0 to lv.Items.Count-1 do
-  begin
-    if lv.Items[ICount].Purpose = TksVListItemPurpose.None then
-      Result := Result + 1;
-  end;
-end;
-
-function TksSlideMenu.GetToolbar: TksSlideMenuToolbar;
-begin
-  Result := FMenu.FToolBar;
-end;
-              {
-function TksSlideMenu.GetToolbarHeight: integer;
-begin
-  Result := 0;
-  if Toolbar.Visible then
-    Result := C_DEFAULT_MENU_TOOLBAR_HEIGHT;
-end;     }
-
-procedure TksSlideMenu.HidePickers;
-var
-  PickerService: IFMXPickerService;
-begin
-  inherited;
-  if TPlatformServices.Current.SupportsPlatformService(IFMXPickerService, PickerService) then
-    PickerService.CloseAllPickers;
-end;
-procedure TksSlideMenu.MenuItemSelected(Sender: TObject; AItem: TksVListItem);
-begin
-  if Assigned(FOnSelectMenuItemEvent) then
-    FOnSelectMenuItemEvent(Self, AItem.TagStr);
-
-  UpdateSelectedItem;
-
-  GenerateFormImage(FFormImage.Position.X);
-  ToggleMenu;
-  if Assigned(FAfterSelectMenuItemEvent) then
-    FAfterSelectMenuItemEvent(Self, AItem.TagStr);
-end;
-
-
-
-procedure TksSlideMenu.Notification(AComponent: TComponent; Operation: TOperation);
-begin
-  inherited;
-  if (AComponent = FToggleButton) and (Operation = TOperation.opRemove) then
-    FToggleButton := nil;
-end;
-
-
-function TksSlideMenu.GetColorOrDefault(AColor, ADefaultIfNull: TAlphaColor): TAlphaColor;
-begin
-  Result := AColor;
-  if Result = claNull then
-    Result := ADefaultIfNull;
-end;
-
-procedure TksSlideMenu.UpdateMenu;
-var
-  ICount: integer;
-  AItem: TksSlideMenuItem;
-  ARow: TksVListItem;
-  lv: TksVirtualListView;
-  ASelectedColor: TAlphaColor;
-  AFontColor, AHeaderFontColor: TAlphaColor;
-begin
-  if FMenu.ListView = nil then
-    Exit;
-  Application.ProcessMessages;
-  lv := FMenu.FListView;
-
-  lv.Position.X := 0;
-  lv.Repaint;
-
-  //lv.Position.Y := GetToolbarHeight;;
-
-  lv.Width := C_DEFAULT_MENU_WIDTH;
-
-  //FMenu
-  FMenu.Width := C_DEFAULT_MENU_WIDTH;
-  AFontColor := GetColorOrDefault(FAppearence.FontColor, C_DEFAULT_MENU_FONT_COLOR);
-  AHeaderFontColor := GetColorOrDefault(FAppearence.HeaderFontColor, C_DEFAULT_MENU_HEADER_TEXT_COLOR);
-  ASelectedColor := GetColorOrDefault(FAppearence.SelectedItemColor, C_DEFAULT_MENU_SELECTED_COLOR);
-
-  lv.Appearence.Background := GetColorOrDefault(FAppearence.BackgroundColor, C_DEFAULT_MENU_BACKGROUND_COLOR);
-  lv.Appearence.ItemBackground := GetColorOrDefault(FAppearence.ItemColor, C_DEFAULT_MENU_BACKGROUND_COLOR);
-  lv.Appearence.HeaderColor := GetColorOrDefault(FAppearence.HeaderColor, C_DEFAULT_MENU_HEADER_COLOR);
-  lv.Appearence.SeparatorColor := GetColorOrDefault(FAppearence.HeaderColor, C_DEFAULT_MENU_HEADER_COLOR);
-  lv.Appearence.SelectedColor := ASelectedColor;
-  lv.Appearence.SelectedFontColor := FAppearence.SelectedFontColor;
-  ///lv.ItemImageSize := 24;
-
-  lv.HeaderHeight := FHeaderHeight;
-  lv.ItemHeight := FItemHeight;
-  lv.BeginUpdate;
-  try
-    lv.Items.Clear;
-
-    {$IFDEF ADD_SAMPLE_MENU_ITEMS}
-    if FItems.Count = 0 then
-    begin
-      // add some sample items...
-      AddHeader('SAMPLE HEADER 0');
-      AddMenuItem('', 'Menu Item 1');
-      AddMenuItem('', 'Menu Item 2');
-      AddHeader('SAMPLE HEADER 1');
-      AddMenuItem('', 'Menu Item 3');
-      AddMenuItem('', 'Menu Item 4');
-      AddMenuItem('', 'Menu Item 5');
-      AddHeader('SAMPLE HEADER 2');
-      AddMenuItem('', 'Menu Item 6');
-      AddMenuItem('', 'Menu Item 7');
-      AddMenuItem('', 'Menu Item 8');
-      AddMenuItem('', 'Menu Item 9');
-      AddMenuItem('', 'Menu Item 10');
-    end;
-    {$ENDIF}
-
-    for ICount := 0 to FItems.Count-1 do
-    begin
-      AItem := FItems[ICount];
-      if AItem.IsHeader then
-      begin
-        ARow := lv.Items.AddHeader(AItem.Text);
-        ARow.Title.Font.Assign(FHeaderFont);
-        ARow.Title.TextSettings.FontColor := AHeaderFontColor;
-        ARow.Title.TextSettings.HorzAlign := FHeaderTextAlign;
-      end
-      else
-      begin
-        ARow := lv.Items.Add(AItem.Text, '', '', atMore);
-
-        if AItem.Image.IsEmpty = False then
-          ARow.Image.Bitmap := AItem.Image;
-        ARow.TagStr := AItem.ID;
-        //ARow.Accessory.OwnsBitmap := True;
-        //ARow.Accessory.Color := FAppearence.AccessoryColor;
-        ARow.Title.Font.Assign(FFont);
-        ARow.Title.TextSettings.FontColor := AFontColor;
-        ARow.Title.TextSettings.HorzAlign:= FItemTextAlign;
-      end;
-    end;
-  finally
-    lv.EndUpdate;
-  end;
-  lv.RecalcAbsoluteNow;
-
-  MenuIndex := FMenuIndex;
-
-  if (lv.ItemIndex = -1) and (FSelectFirstItem) then
-  begin
-    lv.ItemIndex := 0;
-    {for ICount := 0 to lv.Items.Count-1 do
-    begin
-      if lv.Items[ICount].Purpose = TksVListItemPurpose.None then
-      begin
-        lv.ItemIndex := ICount;
-        UpdateSelectedItem;
-        Break;
-      end;
-    end; }
-  end;
-end;
-
-
-
-procedure TksSlideMenu.UpdateSelectedItem;
-var
-  ICount: integer;
-  AItem: TksVListItem;
-begin
-  FMenu.ListView.BeginUpdate;
-  try
-    for ICount := 0 to FMenu.FListView.Items.Count-1 do
-    begin
-      AItem := FMenu.FListView.Items[ICount];
-      if AItem.Index = FMenu.ListView.ItemIndex then
-
-      //if i.ID = AId then
-      begin
-        //AItem.Title.TextSettings.FontColor := FAppearence.SelectedFontColor;
-        //AItem.Accessory.Color := claBlue;
-        //AItem.Background := FAppearence.SelectedItemColor;
-      end
-      else
-      begin
-        //AItem.Title.TextSettings.FontColor := FAppearence.FontColor;
-        //AItem.Accessory.Color := claRed;
-        //AItem.Background := FAppearence.ItemColor;
-      end;
-      AItem.ClearCache;
-      AItem.CacheItem;
-    end;
-  finally
-    FMenu.ListView.EndUpdate;
-  end;
-  Application.ProcessMessages;
-end;
-
-procedure TksSlideMenu.SetMenuIndex(const Value: integer);
-var
-  ICount: integer;
-  AIndex: integer;
-  lv: TksVirtualListView;
-begin
-  AIndex := -1;
-  lv := FMenu.FListView;
-  for ICount := 0 to lv.Items.Count-1 do
-  begin
-    if lv.Items[ICount].Purpose = TksVListItemPurpose.None then
-    begin
-      Inc(AIndex);
-      if AIndex = Value then
-      begin
-        lv.ItemIndex := ICount;
-        Exit;
-      end;
-    end;
-  end;
-  FMenuIndex := Value;
-end;
-
-procedure TksSlideMenu.SetToggleButton(const Value: TCustomButton);
-begin
-  FToggleButton := Value;
-  FToggleButton.OnClick := DoToggleButtonClick;
-end;
-
-procedure TksSlideMenu.SetToolbar(const Value: TksSlideMenuToolbar);
-begin
-  FMenu.FToolBar := Value;
-end;
-
-procedure TksSlideMenu.SetTopPadding(const Value: integer);
-begin
-  FTopPadding := Value;
-end;
-
-procedure TksSlideMenu.SwitchMenuToImage;
-var
-  ABmp: TBitmap;
-  ABottom: single;
-  AWidth: single;
-  AClientHeight: single;
-begin
-  if (Owner is TForm) then
-  begin
-    AWidth        := (Owner as TForm).Width;
-    AClientHeight := (Owner as TForm).ClientHeight;
-  end
-  else if (Owner is TFrame) then
-  begin
-    AWidth        := (Owner as TFrame).Width;
-    AClientHeight := (Owner as TFrame).Height
-  end
-  else
-    exit;
-
-  ABmp := TBitmap.Create(Round(C_DEFAULT_MENU_WIDTH * GetScreenScale), Round(AClientHeight * GetScreenScale));
-  try
-     FMenuImage := TImage.Create(Owner);
-    FMenuImage.Width := C_DEFAULT_MENU_WIDTH;
-    FMenuImage.Height := AClientHeight;
-    case FMenuPosition of
-      mpLeft: FMenuImage.Position.X := 0;
-      mpRight: FMenuImage.Position.X := AWidth - C_DEFAULT_MENU_WIDTH;
-    end;
-    ABmp.Canvas.BeginScene;
-    ABmp.BitmapScale := GetScreenScale;
-    FMenu.PaintTo(ABmp.Canvas, RectF(0, 0, ABmp.Width, ABmp.Height));
-    ABmp.Canvas.EndScene;
-
-    ABmp.Canvas.BeginScene;
-
-    ABottom := ABmp.Height;// Height; //(GetToolbarHeight + FMenu.CalculateListViewHeight)*GetScreenScale;
-
-    ABmp.Canvas.Fill.Color := FAppearence.ItemColor;
-    ABmp.Canvas.FillRect(RectF(0, ABottom, C_DEFAULT_MENU_WIDTH*GetScreenScale, ABmp.Height), 0, 0, AllCorners, 1, ABmp.Canvas.Fill);
-
-    ABmp.Canvas.EndScene;
-    FMenuImage.Bitmap := ABmp;
-  finally
-    FreeAndNil(ABmp);
-  end;
-end;
-
-procedure TksSlideMenu.SwitchImageToMenu;
-var
-  AObject: TfmxObject;
-begin
-  AObject := (Owner as TfmxObject);
-  AObject.InsertObject(AObject.ChildrenCount-1, FMenu);
-  AObject.RemoveObject(FMenuImage);
-  FMenu.HitTest := True;
-end;
-
-procedure TksSlideMenu.ToggleMenu;
-var
-  AStartXPos: single;
-  ANewXPos: single;
-  AObject: TfmxObject;
-  AWidth: single;
-begin
-  if FAnimating then
-    Exit;
-
-  UpdateSelectedItem;
-
-  if FShowing = False then
-  begin
-    if Assigned(FBeforeShow) then
-      FBeforeShow(Self);
-
-    if Assigned(FOnBeforeSlideOut) then
-      FOnBeforeSlideOut(Self);
-  end
-  else
-  begin
-    if Assigned(FBeforeHide) then
-      FBeforeHide(Self);
-  end;
-
-
-  FAnimating := True;
-  try
-    if (FShowing = False) then
-    begin
-      //GenerateShadows;
-      FMenu.FToolBar.UpdateToolbar;
-     //FMenu.UpdateSelectedItem;
-    end;
-    FMenu.HitTest := False;
-
-    AObject := (Owner as TfmxObject);
-
-    if (Owner is TForm) then
-      AWidth := (Owner as TForm).Width
-    else if (Owner is TFrame) then
-      AWidth := (Owner as TFrame).Width
-    else
-      AWidth := 0;
-
-    HidePickers;
-
-    if FShowing = False then
-    begin
-      AStartXPos := 0;
-      ANewXPos := 0;
-      case FMenuPosition of
-        mpLeft:  ANewXPos := C_DEFAULT_MENU_WIDTH;
-        mpRight: ANewXPos := 0-C_DEFAULT_MENU_WIDTH;
-      end;
-
-
-    end
-    else
-    begin
-      AStartXPos := FFormImage.Position.X;
-      ANewXPos := 0;
-    end;
-
-    GenerateFormImage(AStartXPos);
-
-    if (Owner is TForm) then
-      FMenu.Height := (Owner as TForm).ClientHeight
-    else if (Owner is TFrame) then
-      FMenu.Height := (Owner as TFrame).Height
-    else
-      FMenu.Height := 0;
-
-    // add the menu just behind the screen image...
-
-    case FMenuPosition of
-      mpLeft : FMenu.Position.X := 0;
-      mpRight: FMenu.Position.X := AWidth - C_DEFAULT_MENU_WIDTH;
-    end;
-    AObject.InsertObject(0, FMenu);
-
-    if FMenu.FListView.Items.Count = 0 then
-      UpdateMenu;
-
-
-    SwitchMenuToImage;
-    AObject.RemoveObject(FMenu);
-    AObject.InsertObject(AObject.ChildrenCount-1, FMenuImage);
-
-
-    FFormImage.HitTest := False;
-
-    //
-    SlideMenuAnimating := True;
-    TAnimator.AnimateFloatWait(FFormImage, 'Position.X', ANewXPos, FSlideSpeed);
-    Application.ProcessMessages;
-    SlideMenuAnimating := False;
-    FFormImage.HitTest := True;
-
-    FShowing := not FShowing;
-
-
-    if FShowing = False then
-    begin
-      AObject.RemoveObject(FMenu);
-      RemoveFormImage;
-    end
-    else
-      SwitchImageToMenu;
-
-    AObject.RemoveObject(FMenuImage);
-    Application.ProcessMessages;
-
-  finally
-    FAnimating := False;
-  end;
-  if FShowing = False then
-  begin
-    if Assigned(FOnAfterSlideOut) then
-      FOnAfterSlideOut(Self);
-
-    if Assigned(FAfterHide) then
-      FAfterHide(Self);
-  end
-  else
-  begin
-    if Assigned(FAfterShow) then
-      FAfterShow(Self);
-  end;
-end;
-
-{procedure TksSlideMenu.FadeBackground;
-begin
-  FBackground.Fill.Color := claBlack;
-  FBackground.Align := TAlignLayout.Contents;
-  FBackground.OnClick := DoBackgroundClick;
-  FBackground.Opacity := 0;
-  TForm(Owner).AddObject(FBackground);
-  FBackground.BringToFront;
-  TAnimator.AnimateFloat(FBackground, 'Opacity', 0.2, FSlideSpeed);
-end;
-
-procedure TksSlideMenu.UnfadeBackground;
-begin
-  TAnimator.AnimateFloat(FBackground, 'Opacity', 0, FSlideSpeed);
-  TForm(Owner).RemoveObject(FBackground);
-end; }
-
-{ TksSlideMenuItem }
-
-constructor TksSlideMenuItem.Create(AIndex: integer);
-begin
-  inherited Create;
-  FImage := TBitmap.Create;
-  FFont := TFont.Create;
-  FIndex := AIndex;
-  FIsHeader := False;
-end;
-
-destructor TksSlideMenuItem.Destroy;
-begin
-  FreeAndNil(FImage);
-  FreeAndNil(FFont);
-  inherited;
-end;
-
-
-{ TksSlideMenuItems }
-
-function TksSlideMenuItems.AddHeaderItem(AText: string): TksSlideMenuItem;
-begin
-  Result := AddMenuItem('', AText, nil);
-  Result.IsHeader := True;
-end;
-
-function TksSlideMenuItems.AddMenuItem(AId, AText: string; AImage: TBitmap): TksSlideMenuItem;
-begin
-  Result := TksSlideMenuItem.Create(Count);
-  if AImage <> nil then
-    Result.Image.Assign(AImage);
-  Result.Id := AId;
-  Result.Text := AText;
-  Add(Result);
-end;
 
 { TksSlideMenuAppearence }
 
 constructor TksSlideMenuAppearence.Create(ASlideMenu: TksSlideMenu);
 begin
+  inherited Create;
   FSlideMenu := ASlideMenu;
   FHeaderColor := $FF323232;
   FItemColor := $FF222222;
@@ -1197,7 +239,8 @@ begin
     begin
       FHeaderColor := $FF424242;
       FToolBarColor := $FF323232;
-      FItemColor := $FF222222;
+      FItemColor := $FF545454;
+      FBackgroundColor := FItemColor;
       FFontColor := claWhite;
       FHeaderFontColor := $FFDADADA;
       FSelectedFontColor := claWhite;
@@ -1207,27 +250,30 @@ begin
     begin
       FHeaderColor := $FF2A7A9D;
       FToolBarColor := $FF323232;
-      FItemColor := $FF424242;
+      FItemColor := $FF2A7A9D;
+      FBackgroundColor := FItemColor;
       FFontColor := claWhite;
       FHeaderFontColor := $FFC7FFFB;
-      FSelectedFontColor := claBlack;
-      FSelectedColor := $FF00F6FF;
+      FSelectedFontColor := claWhite;
+      FSelectedColor := $FF1A5670;
     end;
   if Value = mtDarkOrange then
     begin
       FHeaderColor := $FFFF9900;
       FToolBarColor := $FF323232;
-      FItemColor := $FF222222;
+      FItemColor := $FFBC7202;
+      FBackgroundColor := FItemColor;
       FFontColor := claWhite;
       FHeaderFontColor := claBlack;
-      FSelectedFontColor := claBlack;
-      FSelectedColor := $FFFFCC00;
+      FSelectedFontColor := claWhite;
+      FSelectedColor := $FFBC7202;
     end;
   if Value = mtDarkGreen then
     begin
       FHeaderColor := $FF76D015;
       FToolBarColor := $FF323232;
       FItemColor := $FF424242;
+      FBackgroundColor := FItemColor;
       FFontColor := claWhite;
       FHeaderFontColor := claBlack;
       FSelectedFontColor := claBlack;
@@ -1238,6 +284,7 @@ begin
       FHeaderColor := $FF424242;
       FToolBarColor := $FF323232;
       FItemColor := $FF828282;
+      FBackgroundColor := FItemColor;
       FFontColor := claWhite;
       FHeaderFontColor := $FFDADADA;
       FSelectedFontColor := claWhite;
@@ -1248,6 +295,7 @@ begin
       FHeaderColor := $FF424242;
       FToolBarColor := $FF323232;
       FItemColor := $FF2A7A9D;
+      FBackgroundColor := FItemColor;
       FFontColor := claWhite;
       FHeaderFontColor := $FFDADADA;
       FSelectedFontColor := claBlack;
@@ -1258,6 +306,7 @@ begin
       FHeaderColor := $FF424242;
       FToolBarColor := $FF323232;
       FItemColor := $FFFF9900;
+      FBackgroundColor := FItemColor;
       FFontColor := claBlack;
       FHeaderFontColor := $FFDADADA;
       FSelectedFontColor := claBlack;
@@ -1268,6 +317,7 @@ begin
       FHeaderColor := $FF424242;
       FToolBarColor := $FF323232;
       FItemColor := $FF76D015;
+      FBackgroundColor := FItemColor;
       FFontColor := claBlack;
       FHeaderFontColor := $FFDADADA;
       FSelectedFontColor := claBlack;
@@ -1282,187 +332,211 @@ begin
   FTheme := mtCustom;
 end;
 
-{ TksSlideMenuContainer }
-   {
-function TksSlideMenuContainer.CalculateListViewHeight: single;
+{ TksSlideMenuExt }
+
+procedure TksSlideMenu.AddMenuItem(AID, AText: string; const AForm: TCommonCustomForm = nil; const AIcon: TksStandardIcon = Custom);
+begin
+  FItems.AddItem(AID, AText, AForm, AIcon);
+end;
+
+constructor TksSlideMenu.Create(AOwner: TComponent);
+begin
+  inherited;
+  FItems := TksSlideMenuItemList.Create;
+  FAppearence := TksSlideMenuAppearence.Create(Self);
+  FInitalizedForms := TList<TCommonCustomForm>.Create;
+end;
+
+destructor TksSlideMenu.Destroy;
+begin
+  FMenuForm.DisposeOf;
+  FreeAndNil(FItems);
+  FreeAndNil(FAppearence);
+  FreeAndNil(FInitalizedForms);
+  inherited;
+end;
+
+procedure TksSlideMenu.OpenMenu(ACallingForm: TCommonCustomForm);
+begin
+  if FItems.Count = 0 then
+  begin
+    if Assigned(FOnBuildMenu) then
+      FOnBuildMenu(Self, FItems);
+  end;
+
+  FCallingForm := ACallingForm;
+  HideLoadingIndicator(FCallingForm);
+  if FMenuForm = nil then
+  begin
+    FMenuForm :=  TfrmSlideMenuUI.Create(nil);
+    FMenuForm.Caption := ACallingForm.Caption;
+    FMenuForm.OnSelectItem := SelectItem;
+    RebuildMenu;
+  end;
+  ACallingForm.Visible := False;
+  FMenuForm.OpenMenu(ACallingForm);
+end;
+
+procedure TksSlideMenu.RebuildMenu;
 var
+  AStream: TResourceStream;
+  AEnumName: String;
   ICount: integer;
-begin
-  Result := 0;
-  for ICount := 0 to FListView.Items.Count-1 do
-  begin
-    Result := Result + FListView.Items[ICount].Height;
-  end;
-end;  }
-
-constructor TksSlideMenuContainer.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-  FSlideMenu := (AOwner as TksSlideMenu);
-  FToolBar := TksSlideMenuToolbar.Create(Self, FSlideMenu);
-  CreateListView;
-  ClipChildren := True;
-  HitTest := True;
-end;
-
-procedure TksSlideMenuContainer.CreateListView;
-begin
-  if FListView <> nil then
-    Exit;
-  FListView := TksVirtualListView.Create(Self);
-
-
-  //FListView.Appearence.Background := claRed;
-
-  FListView.SelectionOptions.KeepSelection := True;
-  FListView.DeleteButton.Enabled := False;
-  FListView.PullToRefresh.Enabled := False;
-  FListView.OnItemClick := ItemClick;
-  FListView.Align := TAlignLayout.Client;
-  //FListView.FullWidthSeparator := True;
-  FListView.DeleteButton.Enabled := False;
-  AddObject(FListView);
-end;
-
-destructor TksSlideMenuContainer.Destroy;
-begin
-  {$IFDEF NEXTGEN}
-  FListView.DisposeOf;
-  FToolBar.DisposeOf;
-  {$ELSE}
-  FListView.Free;
-  FToolBar.Free;
-  {$ENDIF}
-  inherited;
-end;
-
-procedure TksSlideMenuContainer.ItemClick(Sender: TObject; AItem: TksVListItem);
-begin
-  if HitTest = False then
-    Exit;
-  HitTest := False;
-  //UpdateSelectedItem;
-  //Sleep(200);
-
-  FSlideMenu.MenuItemSelected(Self, AItem);
-end;
-
-{ TksSlideMenuToolbar }
-
-constructor TksSlideMenuToolbar.Create(AOwner: TComponent; ASlideMenu: TksSlideMenu);
-begin
-  inherited Create;
-  FSlideMenu := ASlideMenu;
-  FBitmap := TBitmap.Create;
-  FFont := TFont.Create;
-  FFont.Size := C_DEFAULT_MENU_TOOLBAR_FONT_SIZE;
-  FHeader := TImage.Create(AOwner);
-  FHeader.Position.X := 0;
-  FHeader.Position.Y := 0;
-  FHeader.Width := C_DEFAULT_MENU_WIDTH;
-  FHeader.Height := C_DEFAULT_MENU_TOOLBAR_HEIGHT;
-  FHeader.Align := TAlignLayout.Top;
-  FHeader.HitTest := False;
-  FVisible := True;
-  (AOwner as TFmxObject).AddObject(FHeader);
-end;
-
-destructor TksSlideMenuToolbar.Destroy;
-begin
-  FreeAndNil(FBitmap);
-  FreeAndNil(FFont);
-  FreeAndNil(FHeader);
-  inherited;
-end;
-
-function TksSlideMenuToolbar.GetBitmap: TBitmap;
-begin
-  Result := FBitmap;
-end;
-
-function TksSlideMenuToolbar.GetFont: TFont;
-begin
-  Result := FFont;
-end;
-
-function TksSlideMenuToolbar.GetText: string;
-begin
-  Result := FText;
-end;
-
-procedure TksSlideMenuToolbar.SetBitmap(const Value: TBitmap);
-begin
-  FBitmap.Assign(Value);
-end;
-
-procedure TksSlideMenuToolbar.SetFont(const Value: TFont);
-begin
-  FFont.Assign(Value);
-end;
-
-procedure TksSlideMenuToolbar.SetText(const Value: string);
-begin
-  FText := Value;
-end;
-
-procedure TksSlideMenuToolbar.UpdateToolbar;
-var
+  lv: TksVirtualListView;
+  AItem: TksVListItem;
   ABmp: TBitmap;
-  AXPos: integer;
-  AImageRect: TRectF;
-  ARatio: single;
 begin
-  if not Visible then
+  lv := FMenuForm.ksVirtualListView1;
+  lv.Appearence.SelectedColor := FAppearence.SelectedItemColor;
+  lv.Appearence.SelectedFontColor := FAppearence.SelectedFontColor;
+  lv.Appearence.ItemBackground := FAppearence.ItemColor;
+  lv.Appearence.Background := FAppearence.BackgroundColor;
+  lv.ClearItems;
+  for ICount := 0 to FItems.Count-1 do
   begin
-    FHeader.Height := 0;
+    AItem := lv.Items.Add(FItems[ICount].FText, '', '', atMore);
+    AItem.TagInt := ICount;
+    AItem.Title.TextSettings.FontColor := FAppearence.FontColor;
+    AItem.Accessory.SetOpaqueColor(FAppearence.AccessoryColor);
+
+    aBmp := TBitmap.Create;
+    try
+      if FItems[ICount].FBitmap <> nil then
+      begin
+        ABmp := FItems[ICount].FBitmap;
+        ReplaceOpaqueColor(ABmp, claWhite);
+
+        AItem.Image.Bitmap := ABmp;
+        AItem.Image.Width := 20;
+        AItem.Image.Height := 20;
+      end
+      else
+      begin
+
+        AEnumName := GetENumName(TypeInfo(TksStandardIcon), Ord(FItems[ICount].FIcon));
+
+
+        if FItems[ICount].FIcon <> Custom then
+        begin
+
+          AStream := TResourceStream.Create(HInstance, AEnumName, RT_RCDATA);
+          aBmp.LoadFromStream(AStream);
+          ReplaceOpaqueColor(ABmp, claWhite);
+
+          AItem.Image.Bitmap := ABmp;
+          AItem.Image.Width := 20;
+          AItem.Image.Height := 20;
+
+          AStream.Free;
+        end;
+      end;
+    finally
+      ABmp.Free;
+    end;
+  end;
+end;
+
+procedure TksSlideMenu.SelectItem(Sender: TObject; AItem: TksVListItem);
+var
+  mi: TksSlideMenuItem;
+  AForm: TCommonCustomForm;
+begin
+  AForm := nil;
+  mi := nil;
+  if AItem <> nil then
+  begin
+    mi := FItems[AItem.TagInt];
+    if Assigned(FOnSelectMenuItemEvent) then
+      FOnSelectMenuItemEvent(Self, mi.FID);
+    AForm := mi.FForm;
+  end;
+
+
+
+  if (AForm = nil) or (AForm = FCallingForm) then
+  begin
+    AForm := FCallingForm;
+    FMenuForm.CloseMenu;
+    AForm.Visible := True;
     Exit;
   end;
-  ABmp := TBitmap.Create(Round(C_DEFAULT_MENU_WIDTH*GetScreenScale), Round(C_DEFAULT_MENU_TOOLBAR_HEIGHT*GetScreenScale));
-  try
-    ABmp.BitmapScale := GetScreenScale;
-    AXPos := 10;
-    ABmp.Clear(FSlideMenu.Appearence.ToolBarColor);
-    ABmp.Canvas.BeginScene;
 
-    if FBitmap.IsEmpty = False then
-    begin
-      AImageRect := RectF(0, 0, FBitmap.Width, FBitmap.Height);
-      ARatio := (C_DEFAULT_MENU_TOOLBAR_HEIGHT / AImageRect.Height);
-      AImageRect.Width := (AImageRect.Width * ARatio) * 0.5;
-      AImageRect.Height := (AImageRect.Height * ARatio) * 0.5;
-
-      OffsetRect(AImageRect,
-                 12,//(C_DEFAULT_MENU_WIDTH -  AImageRect.Width) / 2,
-                 (C_DEFAULT_MENU_TOOLBAR_HEIGHT -  AImageRect.Height) / 2);
-      ABmp.Canvas.DrawBitmap(FBitmap, RectF(0, 0, FBitmap.Width, FBitmap.Height), AImageRect, 1); //RectF(10, 10, 40, 40), 1);
-      AXPos := 50;
-    end;
-    ABmp.Canvas.Fill.Color := FSlideMenu.Appearence.FFontColor;
-
-    ABmp.Canvas.Font.Assign(FFont);
-    ABmp.Canvas.Fill.Color := FSlideMenu.Appearence.HeaderFontColor;
-    ABmp.Canvas.FillText(RectF(AXPos, 0, C_DEFAULT_MENU_WIDTH, C_DEFAULT_MENU_TOOLBAR_HEIGHT), FText, False, 1, [], TTextAlign.Leading);
-    ABmp.Canvas.EndScene;
-
-    ABmp.Canvas.BeginScene;
-    ABmp.Canvas.Fill.Color := FSlideMenu.Appearence.ItemColor;
-    //ABmp.Canvas.StrokeThickness := 1;
-    ABmp.Canvas.FillRect(RectF(0, C_DEFAULT_MENU_TOOLBAR_HEIGHT-1, C_DEFAULT_MENU_WIDTH, C_DEFAULT_MENU_TOOLBAR_HEIGHT), 0, 0, AllCorners, 1, ABmp.Canvas.Fill);
-    //ABmp.Canvas.DrawLine(PointF(0, ABmp.Height-GetScreenScale), PointF(ABmp.Width, ABmp.Height-GetScreenScale), 1, ABmp.Canvas.Stroke);
-
-
-    ABmp.Canvas.EndScene;
-
-    FHeader.Bitmap := ABmp;
-  finally
-    FreeAndNil(ABmp);
+  if FCallingForm <> nil then
+  begin
+    if FInitalizedForms.IndexOf(FCallingForm) = -1 then
+      FInitalizedForms.Add(FCallingForm);
   end;
+
+  {$IFDEF ANDROID}
+  // fix for Android initial form size
+  if FInitalizedForms.IndexOf(AForm) = -1 then
+  begin
+    AForm.Visible := True;
+    AForm.Visible := False;
+    FInitalizedForms.Add(AForm);
+  end;
+  {$ENDIF}
+
+  //AForm.SetBounds(0, 0, FCallingForm.Width, FCallingForm.Height);
+  {$IFDEF XE10_OR_NEWER}
+  AForm.SetBounds(FMenuForm.Bounds);
+  {$ELSE}
+  AForm.SetBounds(FMenuForm.Left, FMenuForm.Top, FMenuForm.Width, FMenuForm.Height);
+  {$ENDIF}
+  FMenuForm.Image1.Bitmap := GenerateFormImageExt(AForm);
+  FMenuForm.CloseMenu;
+
+  AForm.Visible := True;
+  AForm.BringToFront;
+
+  //Screen.ActiveForm := AForm;
+
+  if FCallingForm <> AForm then
+    FCallingForm.Visible := False;
+
+
+  {TThread.Synchronize (TThread.CurrentThread,
+    procedure ()
+    begin
+      AForm.Visible := True;
+      AForm.BringToFront;
+      Screen.ActiveForm := AForm;
+      if FCallingForm <> AForm then
+        FCallingForm.Visible := False;
+    end);}
+
+  if mi <> nil then
+  begin
+    if Assigned(FAfterSelectMenuItemEvent) then
+      FAfterSelectMenuItemEvent(Self, mi.FID);
+  end;
+end;
+
+{TksSlideMenuItemExtList }
+
+procedure TksSlideMenuItemList.AddItem(AID, AText: string;
+  AForm: TCommonCustomForm; const AIcon: TksStandardIcon = Custom; const ABmp: TBitmap = nil);
+var
+  AItem: TksSlideMenuItem;
+begin
+  AItem := TksSlideMenuItem.Create;
+  AItem.FID := AID;
+  AItem.FText := AText;
+  AItem.FForm := AForm;
+  AItem.FIcon := AIcon;
+  AItem.FBitmap := ABmp;
+  Add(AItem);
 end;
 
 initialization
 
-  SlideMenuAnimating := False;
+//  frmSlideMenuUI := TfrmSlideMenuUI.Create(nil);
+
+finalization
+
+//  frmSlideMenuUI.DisposeOf;
 
 end.
+
 
 

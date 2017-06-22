@@ -2,9 +2,9 @@
 *                                                                              *
 *  TksImageViewer - Enhanced image viewer component                            *
 *                                                                              *
-*  https://github.com/gmurt/KernowSoftwareFMX                                  *
+*  https://bitbucket.org/gmurt/kscomponents                                    *
 *                                                                              *
-*  Copyright 2015 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -31,6 +31,9 @@ interface
 uses Classes, Types, ksTypes, FMX.InertialMovement, System.UITypes, FMX.Graphics,
   FMX.Layouts, FMX.Types;
 
+//const
+//  C_BORDER = 20;
+
 type
   [ComponentPlatformsAttribute(pidWin32 or pidWin64 or
   {$IFDEF XE8_OR_NEWER} pidiOSDevice32 or pidiOSDevice64
@@ -40,41 +43,51 @@ type
   private
     FAniCalc: TksAniCalc;
     FBitmap: TBitmap;
-    FZoom: integer;
+    FZoom: single;
 
-    FStartZoom: integer;
-    FStartDistance: Integer;
+    FStartZoom: single;
+    FStartDistance: single;
     FOnZoom: TNotifyEvent;
     FMaxXPos: single;
     FMaxYPos: single;
+    FZooming: Boolean;
     procedure AniCalcStart(Sender: TObject);
     procedure AniCalcStop(Sender: TObject);
     procedure AniCalcChange(Sender: TObject);
 
     procedure SetBitmap(const Value: TBitmap);
     procedure UpdateScrollLimits;
-    procedure SetZoom(const Value: integer);
+    procedure SetZoom(const Value: single);
   protected
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
-      x, y: single); override;
-    procedure MouseMove(Shift: TShiftState; x, y: single); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState;
-      x, y: single); override;
+    procedure DblClick; override;
     procedure DoMouseLeave; override;
     procedure Paint; override;
     procedure Resize; override;
     procedure CMGesture(var EventInfo: TGestureEventInfo); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Single); override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Single); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Single); override;
+    procedure DoDoubleTap;
   public
-    procedure UpdateLabel(ADistance: integer);
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure MultiTouch(const Touches: TTouches; const Action: TTouchAction);
+    procedure DownloadFile(AUrl: string);
+    function GetFitHeightWidthZoom: integer;
+    procedure FitHeight;
+    procedure FitWidth;
+    procedure FitHeightAndWidth;
   published
     property Align;
     property Bitmap: TBitmap read FBitmap write SetBitmap;
-    property Zoom: integer read FZoom write SetZoom default 100;
-
+    property Zoom: single read FZoom write SetZoom;
+    property Position;
+    property Size;
+    property Width;
+    property Height;
+    property Visible;
+    property Touch;
     property OnGesture;
+    property OnDblClick;
     property OnZoom: TNotifyEvent read FOnZoom write FOnZoom;
   end;
 
@@ -82,7 +95,8 @@ type
 
 implementation
 
-uses System.UIConsts, SysUtils, Math, FMX.Controls;
+uses System.UIConsts, SysUtils, Math, FMX.Controls, System.Net.HttpClientComponent,
+  ksCommon;
 
 
 procedure Register;
@@ -105,38 +119,12 @@ begin
     Scene.ChangeScrollingState(nil, False);
 end;
 
-procedure TksImageViewer.CMGesture(var EventInfo: TGestureEventInfo);
-{$IFDEF IOS}
-var
-  APercent: integer;
-  ANewZoom: integer;
-{$ENDIF}
-begin
-  inherited;
-  {$IFDEF IOS}
-  if FStartDistance = 0 then
-    APercent := 100
-  else
-    APercent := Round((EventInfo.Distance / FStartDistance) * 100);
-
-  ANewZoom := Round(FStartZoom * (APercent / 100));
-  if Max(FZoom, ANewZoom) - Min(FZoom, ANewZoom) > 10 then
-  begin
-    FStartZoom := FZoom;
-    FStartDistance := 0;
-    Exit;
-  end;
-  Zoom := ANewZoom;
-  FStartZoom := Zoom;
-  FStartDistance := EventInfo.Distance;
-  {$ENDIF}
-end;
 
 constructor TksImageViewer.Create(AOwner: TComponent);
 begin
   inherited;
   FBitmap := TBitmap.Create;
-
+  Touch.InteractiveGestures := [TInteractiveGesture.Zoom, TInteractiveGesture.Pan];
   FAniCalc := TksAniCalc.Create(nil);
   FAniCalc.OnChanged := AniCalcChange;
   FAniCalc.ViewportPositionF := PointF(0, 0);
@@ -148,10 +136,20 @@ begin
   FAniCalc.OnChanged := AniCalcChange;
   FAniCalc.OnStart := AniCalcStart;
   FAniCalc.OnStop := AniCalcStop;
+  Width := 100;
+  Height := 100;
   FZoom := 100;
   FMaxXPos := 0;
   FMaxYPos := 0;
+  FZooming := False;
   Touch.InteractiveGestures := [TInteractiveGesture.Zoom, TInteractiveGesture.Pan];
+  //FTouchCount := 0;
+end;
+
+procedure TksImageViewer.DblClick;
+begin
+  inherited;
+
 end;
 
 destructor TksImageViewer.Destroy;
@@ -161,12 +159,10 @@ begin
   inherited;
 end;
 
-procedure TksImageViewer.MouseDown(Button: TMouseButton; Shift: TShiftState; x,
-  y: single);
+procedure TksImageViewer.DoDoubleTap;
 begin
-  inherited;
-  //Form73.ListBox1.Items.Insert(0, 'MouseDown');
-  FAniCalc.MouseDown(x, y);
+  if Assigned(OnDblClick) then
+    OnDblClick(Self);
 end;
 
 procedure TksImageViewer.DoMouseLeave;
@@ -174,73 +170,150 @@ begin
   inherited;
   if (FAniCalc <> nil) then
     FAniCalc.MouseLeave;
-
+  //FTouchCount := 0;
   FStartDistance := 0;
   FStartZoom := 0;
-  //updatelabel(EventInfo.Distance);
-  //updatelabel();
 end;
 
-procedure TksImageViewer.MouseMove(Shift: TShiftState; x, y: single);
+procedure TksImageViewer.DownloadFile(AUrl: string);
+var
+  AHttp: TNetHTTPClient;
+  AStream: TStream;
+  ABmp: TBitmap;
+begin
+  AHttp := TNetHTTPClient.Create(nil);
+  ABmp := TBitmap.Create;
+  try
+    AStream := AHttp.Get(AUrl).ContentStream;
+    AStream.Position := 0;
+    ABmp.LoadFromStream(AStream);
+    Bitmap := ABmp;
+    FitHeightAndWidth;
+  finally
+    AHttp.DisposeOf;
+    FreeAndNil(ABmp);
+  end;
+  InvalidateRect(ClipRect);
+end;
+
+
+procedure TksImageViewer.FitHeight;
+begin
+  Zoom := (Height / FBitmap.Height) * 100;
+end;
+
+procedure TksImageViewer.FitHeightAndWidth;
+begin
+  Zoom := GetFitHeightWidthZoom;
+end;
+
+procedure TksImageViewer.FitWidth;
+begin
+  Zoom := (Width / FBitmap.Width) * 100;
+end;
+
+function TksImageViewer.GetFitHeightWidthZoom: integer;
+var
+  z1, z2: single;
+begin
+  z1 := (Height / FBitmap.Height) * 100;
+  z2 := (Width / FBitmap.Width) * 100;
+  Result := Trunc(Min(z1, z2));
+end;
+
+procedure TksImageViewer.CMGesture(var EventInfo: TGestureEventInfo);
+{$IFDEF IOS}
+var
+  ADistance: integer;
+  ANewZoom: single;
+{$ENDIF}
+begin
+  inherited;
+  {$IFDEF IOS}
+  if EventInfo.GestureID = igiDoubleTap then
+    DoDoubleTap;
+
+  if EventInfo.GestureID = igiZoom then
+  begin
+    if TInteractiveGestureFlag.gfEnd in EventInfo.Flags then
+    begin
+      FZooming := False;
+      FStartDistance := 0;
+      Exit;
+    end;
+    //if TInteractiveGestureFlag.gfBegin in EventInfo.Flags then
+    if FStartDistance = 0 then
+    begin
+      FStartDistance := Round(EventInfo.Distance);//EventInfo.Distance;
+      FStartZoom := FZoom;
+      FZooming := True;
+      Exit;
+    end;
+    ADistance := Round(EventInfo.Distance-FStartDistance) * Round(GetScreenScale(True));
+    //if FStartZoom + Round(EventInfo.Distance-FStartDistance) > 10 then
+
+    ANewZoom := FStartZoom + (ADistance / 10);
+    ANewZoom := Min(ANewZoom, 200);
+    ANewZoom := Max(ANewZoom, 10);
+    Zoom := ANewZoom;
+  end;
+  {$ENDIF}
+end;
+
+
+
+procedure TksImageViewer.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Single);
+begin
+  inherited;
+  FStartDistance := 0;
+  FAniCalc.MouseDown(x, y);
+end;
+
+procedure TksImageViewer.MouseMove(Shift: TShiftState; X, Y: Single);
 begin
   inherited;
   FAniCalc.MouseMove(x, y);
 end;
 
-procedure TksImageViewer.MouseUp(Button: TMouseButton; Shift: TShiftState; x,
-  y: single);
+procedure TksImageViewer.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Single);
 begin
   inherited;
+  FZooming := False;
   FAniCalc.MouseUp(x, y);
-  //Form73.ListBox1.Items.Insert(0, 'MouseUp');
-  FStartZoom := 0;
   FStartDistance := 0;
-  UpdateScrollLimits;
-end;
-
-procedure TksImageViewer.MultiTouch(const Touches: TTouches;
-  const Action: TTouchAction);
-begin
-  // still working this out.
 end;
 
 procedure TksImageViewer.Paint;
 var
-  ASourceRect: TRectF;
   ADestRect: TRectF;
   ASaveState: TCanvasSaveState;
+  AScale: single;
 begin
   inherited;
-  if (csDesigning in ComponentState) then
-    DrawDesignBorder(claDimgray, claDimgray);
   ASaveState := Canvas.SaveState;
   try
-    Canvas.IntersectClipRect(ClipRect);
-    Canvas.Clear(claBlack);
-    ASourceRect := RectF(0, 0, FBitmap.Width, FBitmap.Height);
+    Canvas.IntersectClipRect(RectF(0, 0, Width, Height));
+    Canvas.Clear(claLightgray);
 
-    ADestRect := ASourceRect;
-    ADestRect.Width := (FBitmap.Width/100)*FZoom;
-    ADestRect.Height := (FBitmap.Height/100)*FZoom;
+    AScale := FZoom / 100;
+    ADestRect := RectF(0,0, (FBitmap.Width * AScale), (FBitmap.Height * AScale));
 
-    //{$IFDEF ANDROID}
-    ADestRect := ClipRect;
-    //{$ENDIF}
-
-    OffsetRect(ADestRect, 0-FAniCalc.ViewportPosition.X, 0-FAniCalc.ViewportPosition.Y);
+    OffsetRect(ADestRect, 0-(FAniCalc.ViewportPosition.X), 0-(FAniCalc.ViewportPosition.Y));
 
     if ADestRect.Width < Width then
-      OffsetRect(ADestRect, (Width - ADestRect.Width) /2, 0);
+      OffsetRect(ADestRect, (Width-ADestRect.Width) / 2, 0);
 
     if ADestRect.Height < Height then
-      OffsetRect(ADestRect, 0, (Height - ADestRect.Height) /2);
+      OffsetRect(ADestRect, 0, (Height-ADestRect.Height) / 2);
 
+    InflateRect(ADestRect, -10, -10);
     Canvas.DrawBitmap(FBitmap,
-                      ASourceRect,
+                      RectF(0, 0, FBitmap.Width, FBitmap.Height),
                       ADestRect,
                       1,
                       True);
-
   finally
     Canvas.RestoreState(ASaveState);
   end;
@@ -258,36 +331,33 @@ begin
   UpdateScrollLimits;
 end;
 
-procedure TksImageViewer.SetZoom(const Value: integer);
+procedure TksImageViewer.SetZoom(const Value: single);
 var
   xpercent, ypercent: single;
+  ANewX, ANewY: single;
 begin
-  if (Value > 10) and (Value < 200) then
+
+  if FZoom <> Value then
   begin
-    if FZoom <> Value then
-    begin
-      FZoom := Value;
-   FAniCalc.UpdatePosImmediately;
-   FAniCalc.MouseLeave;
-
-    if FMaxXPos = 0 then
-      XPercent := 0
-    else
-      xpercent := (FAniCalc.ViewportPositionF.X / FMaxXPos) * 100;
-    if FMaxYPos = 0 then
-      ypercent := 0
-    else
-      ypercent := (FAniCalc.ViewportPositionF.Y / FMaxYPos) * 100;
-
+    if Value < GetFitHeightWidthZoom then
+      Exit;
+    xPercent := 0;
+    yPercent := 0;
+    if (FAniCalc.ViewportPosition.X > 0) and (FMaxXPos > 0) then xPercent := (FAniCalc.ViewportPosition.X / FMaxXPos) * 100;
+    if (FAniCalc.ViewportPosition.Y > 0) and (FMaxYPos > 0) then yPercent := (FAniCalc.ViewportPosition.Y / FMaxYPos) * 100;
+    FZoom := Value;
     UpdateScrollLimits;
 
-    FAniCalc.ViewportPositionF := PointF((FMaxXPos / 100) * xpercent,
-                                         (FMaxYPos / 100) * ypercent);
+    ANewX := 0;
+    ANewY := 0;
+    if (FMaxXPos > 0) and (xpercent > 0) then ANewX := (FMaxXPos/100) * xpercent;
+    if (FMaxYPos > 0) and (ypercent > 0) then ANewY := (FMaxYPos/100) * ypercent;
+
+    FAniCalc.ViewportPositionF := PointF(ANewX, ANewY);
 
     InvalidateRect(ClipRect);
-      if Assigned(FOnZoom) then
-        FOnZoom(Self);
-    end;
+    if Assigned(FOnZoom) then
+      FOnZoom(Self);
   end;
 end;
 
@@ -296,34 +366,22 @@ begin
   InvalidateRect(ClipRect);
 end;
 
-
-procedure TksImageViewer.UpdateLabel(ADistance: integer);
-begin
-
-end;
-
 procedure TksImageViewer.UpdateScrollLimits;
 var
   Targets: array of TAniCalculations.TTarget;
-  w, h: single;
+  AScale: single;
 begin
-
   if FAniCalc <> nil then
   begin
-    //w := (FBitmap.Width / 100) * FZoom;
-    //h := (FBitmap.Height / 100) * FZoom;
-    //w := w - Width;
-    //h := h - Height;
-
-    w := 0;
-    h := 0;
+    AScale := FZoom / 100;
 
     SetLength(Targets, 2);
     Targets[0].TargetType := TAniCalculations.TTargetType.Min;
     Targets[0].Point := TPointD.Create(0, 0);
 
     Targets[1].TargetType := TAniCalculations.TTargetType.Max;
-    Targets[1].Point := TPointD.Create(Max(0,w), Max(0, h));
+    Targets[1].Point := TPointD.Create(Max(0,((FBitmap.Width*AScale))-Width),
+                                       Max(0, ((FBitmap.Height*AScale))-Height));
     FAniCalc.SetTargets(Targets);
 
     FMaxXPos := Targets[1].Point.X;

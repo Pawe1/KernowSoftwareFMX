@@ -4,7 +4,7 @@
 *                                                                              *
 *  https://github.com/gmurt/KernowSoftwareFMX                                  *
 *                                                                              *
-*  Copyright 2015 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -33,7 +33,7 @@ uses Classes, FMX.StdCtrls, FMX.Graphics, ksControlBadge, ksTypes, FMX.Objects,
   System.UITypes, System.UIConsts;
 
 type
-  TksSpeedButtonIcon = (Custom, AlarmClock, BarChart, Barcode, Bell, BookCover, BookCoverMinus, BookCoverPlus, BookMark, BookOpen,
+  {TksSpeedButtonIcon = (Custom, AlarmClock, BarChart, Barcode, Bell, BookCover, BookCoverMinus, BookCoverPlus, BookMark, BookOpen,
                         Calendar, Camera, Car, Clock, CloudDownload, CloudUpload, Cross, Document, Download, Earth, Email,
                         Fax, FileList, FileMinus, FilePlus, Files, FileStar, FileTick, Flag, Folder, FolderMinus,
                         FolderPlus, FolderStar, Home, Inbox, Incoming, ListBullets, ListCheckBoxes, ListImages, ListNumbered, ListTicked,
@@ -42,7 +42,7 @@ type
                         Star, Tablet, Tag, Telephone, Telephone2, TelephoneBook, Tick, Timer, Trash, Upload,
                         User, UserEdit, UserGroup, Users, UserSearch,
                         VideoCamera, VideoPlayer, Viewer,
-                        Wifi, Window, Write);
+                        Wifi, Window, Write);  }
 
 
   [ComponentPlatformsAttribute(pidWin32 or pidWin64 or
@@ -52,13 +52,13 @@ type
   TksSpeedButton = class(TksBaseSpeedButton)
   private
     FBadge: TksControlBadge;
-    FIcon: TksSpeedButtonIcon;
+    FIcon: TksStandardIcon;
     FBitmap: TBitmap;
     FMouseDown: Boolean;
     FIconColor: TAlphaColor;
     procedure SetBadge(Value: TksBadgeProperties);
     function GetBadge: TksBadgeProperties;
-    procedure SetIcon(const Value: TksSpeedButtonIcon);
+    procedure SetIcon(const Value: TksStandardIcon);
     procedure Invalidate;
     procedure SetIconColor(const Value: TAlphaColor);
   protected
@@ -71,7 +71,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   published
-    property Icon: TksSpeedButtonIcon read FIcon write SetIcon;
+    property Icon: TksStandardIcon read FIcon write SetIcon;
     property Badge: TksBadgeProperties read GetBadge write SetBadge;
     property IconColor: TAlphaColor read FIconColor write SetIconColor default claNull;
   end;
@@ -98,6 +98,7 @@ begin
   FIcon := Custom;
   FBitmap := TBitmap.Create;
   FIconColor := claNull;
+  RepeatClick := False;
   ///FImage := TImage.Create(Self);
   //FImage.HitTest := False;
   //FImage.Locked := True;
@@ -180,6 +181,9 @@ begin
         {$IFDEF ANDROID}
         ReplaceOpaqueColor(FBitmap, GetColorOrDefault(FIconColor, claDimgray));
         {$ENDIF}
+        {$IFDEF MSWINDOWS}
+        ReplaceOpaqueColor(FBitmap, FIconColor);
+        {$ENDIF}
       end;
 
       Canvas.DrawBitmap(ABmp,
@@ -195,14 +199,14 @@ begin
   end;
 end;
 
-procedure TksSpeedButton.SetIcon(const Value: TksSpeedButtonIcon);
+procedure TksSpeedButton.SetIcon(const Value: TksStandardIcon);
 var
   AStream: TResourceStream;
   AEnumName: String;
 begin
-  if Value <> TksSpeedButtonIcon.Custom  then
+  if Value <> TksStandardIcon.Custom  then
   begin
-    AEnumName := GetENumName(TypeInfo(TksSpeedButtonIcon), Ord(Value));
+    AEnumName := GetENumName(TypeInfo(TksStandardIcon), Ord(Value));
     AStream := TResourceStream.Create(HInstance, AEnumName, RT_RCDATA);
     try
       FBitmap.Clear(claNull);
@@ -240,51 +244,17 @@ begin
   inherited;
   FMouseDown := True;
   Invalidate;
-  //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  Application.ProcessMessages;
+  //Application.ProcessMessages;
 end;
 
 
 procedure TksSpeedButton.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Single);
 begin
-  inherited;
   FMouseDown := False;
   Invalidate;
-  Application.ProcessMessages;
+  //Application.ProcessMessages;
+  inherited;
 end;
 
 initialization

@@ -2,9 +2,9 @@
 *                                                                              *
 *  TksCircleProgress - Circular Progress Component                             *
 *                                                                              *
-*  https://github.com/gmurt/KernowSoftwareFMX                                  *
+*  https://bitbucket.org/gmurt/kscomponents                                    *
 *                                                                              *
-*  Copyright 2016 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -44,12 +44,14 @@ type
     FColor: TAlphaColor;
     FCaptionType: TksCircleProgressCaptionType;
     FText: string;
+    FThickness: integer;
     procedure RecreateBitmap;
     procedure SetValue(const Value: single);
     procedure SetColor(const Value: TAlphaColor);
     procedure SetBackgroundColor(const Value: TAlphaColor);
     procedure SetCaptionType(const Value: TksCircleProgressCaptionType);
     procedure SetText(const Value: string);
+    procedure SetThickness(const Value: integer);
   protected
     procedure Paint; override;
   public
@@ -57,6 +59,7 @@ type
     destructor Destroy; override;
     procedure AnimateToValue(AValue: single; const ADurationSecs: integer = 1);
   published
+    property Align;
     property CaptionType: TksCircleProgressCaptionType read FCaptionType write SetCaptionType default ksCirclePercent;
     property Height;
     property Width;
@@ -66,13 +69,14 @@ type
     property Color: TAlphaColor read FColor write SetColor default claDodgerblue;
     property Value: single read FValue write SetValue;
     property Text: string read FText write SetText;
+    property Thickness: integer read FThickness write SetThickness default 15;
   end;
 
   procedure Register;
 
 implementation
 
-uses FMX.Controls, Math, SysUtils, Types, FMX.Types, FMX.Ani;
+uses FMX.Controls, Math, SysUtils, Types, FMX.Types, FMX.Ani, ksCommon, FMX.Forms;
 
 const
   C_SCALE = 3;
@@ -101,6 +105,8 @@ begin
   FValue := 0;
   Width := 150;
   Height := 150;
+  FThickness := 15;
+  RecreateBitmap;
 end;
 
 destructor TksCircleProgress.Destroy;
@@ -115,11 +121,9 @@ var
   ACaption: string;
 begin
   inherited;
-  RecreateBitmap;
   r := RectF(0, 0, Width, Height);
+  Canvas.BeginScene;
   Canvas.DrawBitmap(FBitmap, RectF(0, 0, FBitmap.Width, FBitmap.Height), r, 1, True);
-
-
   ACaption := '';
   case FCaptionType of
     ksCirclePercent: ACaption := ' '+InTToStr(Round(FValue))+'%';
@@ -128,6 +132,7 @@ begin
   Canvas.Fill.Color := FColor;
   Canvas.Font.Size := 24;
   Canvas.FillText(ClipRect, ACaption, False, 1, [], TTextAlign.Center, TTextAlign.Center);
+  Canvas.EndScene;
 end;
 
 procedure TksCircleProgress.RecreateBitmap;
@@ -135,29 +140,32 @@ var
   AAngle: single;
   x1, y1, x2, y2, x3, y3: single;
   AThickness: integer;
+  AScale: single;
 begin
-  FBitmap.SetSize(Round(Width*C_SCALE), Round(Height*C_SCALE));
+  AScale := Min(C_SCALE, 2);// GetScreenScale(False);
+  FBitmap.SetSize(Round(Width*AScale), Round(Height*AScale));
   FBitmap.Clear(claNull);
-  FBitmap.Canvas.BeginScene(nil);
+  FBitmap.Canvas.BeginScene;
   try
     AAngle := 0;
-    x1 := Round((Width * C_SCALE)/2);
-    y1 := Round((Height * C_SCALE)/2);
+    x1 := Round((Width * AScale)/2);
+    y1 := Round((Height * AScale)/2);
 
-    AThickness := Round(25 * C_SCALE);
+    AThickness := Round(FThickness * AScale);
 
-    FBitmap.Canvas.StrokeThickness := 4;
+    //FBitmap.Canvas.BeginScene;
+    FBitmap.Canvas.Stroke.Thickness := 4;
     FBitmap.Canvas.Stroke.Color := FBackgroundColor;
     FBitmap.Canvas.Stroke.Kind := TBrushKind.Solid;
-
+    //FBitmap.Canvas.EndScene;
     while AAngle < 360 do
     begin
 
 
-      x2 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*C_SCALE)/2)-AThickness));
-      y2 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*C_SCALE)/2)-AThickness));
-      x3 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*C_SCALE)/2)-4));
-      y3 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*C_SCALE)/2)-4));
+      x2 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*AScale)/2)-AThickness));
+      y2 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*AScale)/2)-AThickness));
+      x3 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*AScale)/2)-4));
+      y3 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*AScale)/2)-4));
 
       FBitmap.Canvas.DrawLine(PointF(x2, y2), PointF(x3, y3), 1);
       AAngle := AAngle + 1;
@@ -165,17 +173,17 @@ begin
 
     AAngle := 0;
 
-    FBitmap.Canvas.StrokeThickness := 4;
+    FBitmap.Canvas.Stroke.Thickness := 4;
     FBitmap.Canvas.Stroke.Color := FColor;
     FBitmap.Canvas.Stroke.Kind := TBrushKind.Solid;
 
     while AAngle < ((360 / 100) * FValue) do
     begin
 
-      x2 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*C_SCALE)/2)-AThickness));
-      y2 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*C_SCALE)/2)-AThickness));
-      x3 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*C_SCALE)/2)-4));
-      y3 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*C_SCALE)/2)-4));
+      x2 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*AScale)/2)-AThickness));
+      y2 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*AScale)/2)-AThickness));
+      x3 := x1 + (cos(DegToRad(AAngle-90)) * (((Width*AScale)/2)-4));
+      y3 := y1 + (sin(DegToRad(AAngle-90)) * (((Height*AScale)/2)-4));
 
       FBitmap.Canvas.DrawLine(PointF(x2, y2), PointF(x3, y3), 1);
       AAngle := AAngle + 1;
@@ -183,7 +191,7 @@ begin
 
   finally
     FBitmap.Canvas.EndScene;
-  end;
+  end; //}
 end;
 
 procedure TksCircleProgress.SetBackgroundColor(const Value: TAlphaColor);
@@ -191,6 +199,7 @@ begin
   if FBackgroundColor <> Value then
   begin
     FBackgroundColor := Value;
+    RecreateBitmap;
     InvalidateRect(ClipRect);
   end;
 end;
@@ -201,6 +210,7 @@ begin
   if FCaptionType <> Value then
   begin
     FCaptionType := Value;
+    RecreateBitmap;
     InvalidateRect(ClipRect);
   end;
 end;
@@ -210,6 +220,7 @@ begin
   if FColor <> Value then
   begin
     FColor := Value;
+    RecreateBitmap;
     InvalidateRect(ClipRect);
   end;
 end;
@@ -223,6 +234,16 @@ begin
   end;
 end;
 
+procedure TksCircleProgress.SetThickness(const Value: integer);
+begin
+  if FThickness <> Value then
+  begin
+    FThickness := Value;
+    RecreateBitmap;
+    InvalidateRect(ClipRect);
+  end;
+end;
+
 procedure TksCircleProgress.SetValue(const Value: single);
 begin
   if FValue <> Value then
@@ -230,7 +251,11 @@ begin
     FValue := Value;
     FValue := Max(FValue, 0);
     FValue := Min(FValue, 100);
-    InvalidateRect(ClipRect);
+    RecreateBitmap;
+    Repaint;
+    {$IFDEF ANDROID}
+    Application.ProcessMessages;
+    {$ENDIF}
   end;
 end;
 

@@ -1,0 +1,47 @@
+object frmSlideMenuUI: TfrmSlideMenuUI
+  Left = 0
+  Top = 0
+  Caption = 'Form3'
+  ClientHeight = 364
+  ClientWidth = 364
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnKeyUp = FormKeyUp
+  DesignerMasterStyle = 0
+  object ksVirtualListView1: TksVirtualListView
+    Align = Left
+    Appearence.Background = claDarkslategray
+    Appearence.SeparatorColor = xFF1B2E2E
+    Appearence.ItemBackground = claDarkslategray
+    Appearence.SelectedColor = claRed
+    Appearence.SelectedFontColor = claWhite
+    DeleteButton.Text = 'Delete'
+    NoItemsText.Font.Size = 18.000000000000000000
+    PullToRefresh.PullText = 'PULL TO REFRESH'
+    PullToRefresh.ReleaseText = 'RELEASE TO REFRESH'
+    SelectionOptions.KeepSelection = True
+    Size.Width = 250.000000000000000000
+    Size.Height = 364.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object Image1: TImage
+    MultiResBitmap = <
+      item
+      end>
+    Position.X = 224.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 113.000000000000000000
+    Size.Height = 161.000000000000000000
+    Size.PlatformDefault = False
+    WrapMode = Original
+    OnClick = Image1Click
+    object ShadowEffect1: TShadowEffect
+      Distance = 5.000000000000000000
+      Direction = 180.000000000000000000
+      Softness = 0.300000011920929000
+      Opacity = 0.600000023841857900
+      ShadowColor = claBlack
+    end
+  end
+end

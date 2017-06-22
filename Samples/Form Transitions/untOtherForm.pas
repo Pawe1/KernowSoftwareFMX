@@ -5,14 +5,16 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, ksTableView,
-  ksFormTransition, FMX.StdCtrls, FMX.Controls.Presentation, ksTypes;
+  ksFormTransition, FMX.StdCtrls, FMX.Controls.Presentation, ksTypes,
+  ksVirtualListView;
 
 type
   TForm5 = class(TForm)
     ToolBar1: TToolBar;
     Label1: TLabel;
     Button1: TButton;
-    ksTableView1: TksTableView;
+    ksFormTransition1: TksFormTransition;
+    ksVirtualListView1: TksVirtualListView;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
   private
@@ -31,7 +33,7 @@ implementation
 
 procedure TForm5.Button1Click(Sender: TObject);
 begin
-  PopForm;
+  ksFormTransition1.Pop;
 end;
 
 procedure TForm5.FormCreate(Sender: TObject);
@@ -47,9 +49,12 @@ begin
 
   for ICount := 1 to 5 do
   begin
-    ksTableView1.Items.AddItem('Setting '+InTtoStr(ICount)).AddSwitch(0, False);
+    ksVirtualListView1.Items.Add('Setting '+InTtoStr(ICount), '', '');
   end;
 
 end;
+
+
+//--------------
 
 end.

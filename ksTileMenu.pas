@@ -2,9 +2,9 @@
 *                                                                              *
 *  TksTileMenu - tile menu compoonent                                          *
 *                                                                              *
-*  https://github.com/gmurt/KernowSoftwareFMX                                  *
+*  https://bitbucket.org/gmurt/kscomponents                                    *
 *                                                                              *
-*  Copyright 2015 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -341,7 +341,7 @@ begin
         begin
           Canvas.Stroke.Color := claBlack;
           Canvas.Stroke.Dash := TStrokeDash.Dash;
-          Canvas.StrokeThickness := 1;
+          Canvas.Stroke.Thickness := 1;
           Canvas.DrawRect(RectF(0, 0, Width, Height), 0, 0, AllCorners, 1);
         end;
 
@@ -535,8 +535,8 @@ begin
   FTileMenu.GetTileRects(FCol, FRow, r1, r2, r3);
   ACanvas.Stroke.Color := claSilver;
   ACanvas.Stroke.Kind := TBrushKind.Solid;
-  ACanvas.StrokeDash := TStrokeDash.Solid;
-  ACanvas.StrokeThickness := 1;
+  ACanvas.Stroke.Dash := TStrokeDash.Solid;
+  ACanvas.Stroke.Thickness := 1;
 
   if FMouseDown then
   begin

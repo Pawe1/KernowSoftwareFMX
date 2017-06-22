@@ -15,7 +15,7 @@ object Form24: TForm24
     Size.PlatformDefault = False
     TabOrder = 0
     object Label1: TLabel
-      Align = Client
+      Align = Contents
       StyledSettings = [Family, Style, FontColor]
       HitTest = True
       Size.Width = 356.000000000000000000
@@ -24,6 +24,7 @@ object Form24: TForm24
       TextSettings.Font.Size = 16.000000000000000000
       TextSettings.HorzAlign = Center
       Text = 'TksTabControl Demo'
+      OnClick = Label1Click
     end
     object Image1: TImage
       MultiResBitmap.Height = 255
@@ -1714,7 +1715,6 @@ object Form24: TForm24
     Size.PlatformDefault = False
     object ksTabItem0: TksTabItem
       Text = 'List of Items'
-      BadgeValue = 0
       Icon.PNG = {
         89504E470D0A1A0A0000000D49484452000000320000003208060000001E3F88
         B1000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
@@ -1725,9 +1725,11 @@ object Form24: TForm24
         4EB58AB03F879D865B6BD58D5BAB92699C71AA5584FD39EC3414A1A1080D4568
         BC45143A1D23CA180FED5625417D15B8380000000049454E44AE426082}
       StandardIcon = FileList
+      TabIndex = 0
       object ksVirtualListView1: TksVirtualListView
         Align = Client
         DeleteButton.Text = 'Delete'
+        NoItemsText.Font.Size = 18.000000000000000000
         PullToRefresh.PullText = 'Pull to refresh...'
         PullToRefresh.ReleaseText = 'Release to refresh'
         Size.Width = 356.000000000000000000
@@ -1737,7 +1739,6 @@ object Form24: TForm24
     end
     object ksTabItem1: TksTabItem
       Text = 'Settings'
-      BadgeValue = 0
       Icon.PNG = {
         89504E470D0A1A0A0000000D49484452000000320000003208060000001E3F88
         B1000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
@@ -1786,6 +1787,7 @@ object Form24: TForm24
         C8BC3E3E8296A7AD164FD9174F6EC01FCFDADAAE00B0A0DE9B6E9A7E4D000000
         0049454E44AE426082}
       StandardIcon = Settings
+      TabIndex = 1
       object Layout1: TLayout
         Align = Client
         Margins.Left = 8.000000000000000000
@@ -1835,26 +1837,6 @@ object Form24: TForm24
           Size.PlatformDefault = False
           OnChange = ksSegmentButtons2Change
         end
-        object Button1: TButton
-          Position.Y = 144.000000000000000000
-          Size.Width = 121.000000000000000000
-          Size.Height = 30.000000000000000000
-          Size.PlatformDefault = False
-          StyleLookup = 'listitembutton'
-          TabOrder = 3
-          Text = 'Add Tab'
-          OnClick = Button1Click
-        end
-        object Button2: TButton
-          Position.Y = 184.000000000000000000
-          Size.Width = 121.000000000000000000
-          Size.Height = 30.000000000000000000
-          Size.PlatformDefault = False
-          StyleLookup = 'listitembutton'
-          TabOrder = 2
-          Text = 'Clear Tabs'
-          OnClick = Button2Click
-        end
         object ksSegmentButtons3: TksSegmentButtons
           Align = Top
           ItemIndex = 0
@@ -1879,6 +1861,33 @@ object Form24: TForm24
           Size.Height = 45.000000000000000000
           Size.PlatformDefault = False
           OnSelectSegment = ksSegmentButtons3SelectSegment
+        end
+        object Button3: TButton
+          CanFocus = False
+          DisableFocusEffect = True
+          Position.Y = 150.000000000000000000
+          Size.Width = 97.000000000000000000
+          Size.Height = 30.000000000000000000
+          Size.PlatformDefault = False
+          StyleLookup = 'listitembutton'
+          TabOrder = 1
+          TabStop = False
+          Text = 'Add Tab'
+          OnClick = Button3Click
+        end
+        object Button2: TButton
+          CanFocus = False
+          DisableFocusEffect = True
+          Position.X = 101.000000000000000000
+          Position.Y = 150.000000000000000000
+          Size.Width = 108.000000000000000000
+          Size.Height = 30.000000000000000000
+          Size.PlatformDefault = False
+          StyleLookup = 'listitembutton'
+          TabOrder = 2
+          TabStop = False
+          Text = 'Clear Tabs'
+          OnClick = Button2Click
         end
       end
     end

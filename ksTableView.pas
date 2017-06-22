@@ -2,9 +2,9 @@
 *                                                                              *
 *  TksTableView - High-Performance Mobile Scrolling List Component             *
 *                                                                              *
-*  https://github.com/gmurt/KernowSoftwareFMX                                  *
+*  https://bitbucket.org/gmurt/kscomponents                                    *
 *                                                                              *
-*  Copyright 2015 Graham Murt                                                  *
+*  Copyright 2017 Graham Murt                                                  *
 *                                                                              *
 *  email: graham@kernow-software.co.uk                                         *
 *                                                                              *
@@ -946,14 +946,14 @@ type
   private
     FCachedCount: integer;
     {$IFNDEF VER310}
-    [weak]FTableView: TksTableView;
-    procedure UpdateIndexes;
+    //[weak]FTableView: TksTableView;
+    //procedure UpdateIndexes;
     {$ENDIF}
     function GetLastItem: TksTableViewItem;
     function GetFirstItem: TksTableViewItem;
     function GetItemByID(AID: string): TksTableViewItem;
   protected
-    {$IFDEF VER310}
+    {$IFDEF XE8_OR_NEWER}
     [weak]FTableView: TksTableView;
     procedure UpdateIndexes;
     {$ENDIF}
@@ -1836,8 +1836,8 @@ type
 
 procedure Register;
 
-var
-  AccessoryImages: TksTableViewAccessoryImageList;
+//var
+  //AccessoryImages: TksTableViewAccessoryImageList;
 
 implementation
 
@@ -2541,11 +2541,11 @@ end;
 
 procedure TksTableViewItemAccessory.RedrawAccessory;
 begin
-  Bitmap := AccessoryImages.Images[FAccessory];
+  Bitmap := AAccessories.Images[FAccessory];
   if FColor = claNull then
     OwnsBitmap := False;
-  FWidth := Bitmap.Width / AccessoryImages.ImageScale;
-  FHeight := Bitmap.Height / AccessoryImages.ImageScale;
+  FWidth := Bitmap.Width / AAccessories.ImageScale;
+  FHeight := Bitmap.Height / AAccessories.ImageScale;
   Changed;
 end;
 
@@ -3757,13 +3757,13 @@ begin
   begin
     // seperator...
     ACanvas.Stroke.Color := FTableView.Appearence.SeparatorColor;
-    ACanvas.StrokeThickness := 1;
+    ACanvas.Stroke.Thickness := 1;
     ACanvas.Stroke.Kind := TBrushKind.Solid;
     ACanvas.Stroke.Dash := TStrokeDash.Solid;
     if FPurpose = Header then
     begin
       ACanvas.Stroke.Color := $FFD2D2D2;
-      ACanvas.StrokeThickness := 0.5;
+      ACanvas.Stroke.Thickness := 0.5;
     end;
     ASeperatorMargin := 0;
     if (FTableView.FullWidthSeparator = False) and (FPurpose = TksTableViewItemPurpose.None) then
@@ -5728,8 +5728,8 @@ begin
                   OffsetRect(FStickyButtonRect,-(SelectionOptions.FSelectionOverlay.Stroke.Thickness/2),0);
                 // draw the sticky button...
                 case FHeaderOptions.StickyHeaders.Button.Selected of
-                  True: AccessoryImages.DrawAccessory(Canvas, FStickyButtonRect, TksAccessoryType.atArrowDown, claBlack, FAppearence.SelectedColor);
-                  False: AccessoryImages.DrawAccessory(Canvas, FStickyButtonRect, TksAccessoryType.atArrowDown, claNull, claNull);
+                  True: AAccessories.DrawAccessory(Canvas, FStickyButtonRect, TksAccessoryType.atArrowDown, claBlack, FAppearence.SelectedColor);
+                  False: AAccessories.DrawAccessory(Canvas, FStickyButtonRect, TksAccessoryType.atArrowDown, claNull, claNull);
                 end;
               end;
             end;
@@ -6415,7 +6415,7 @@ begin
       end;
       ABmp.Canvas.Fill.Assign(FFill);
       ABmp.Canvas.Stroke.Assign(FStroke);
-      ABmp.Canvas.StrokeThickness := 1;
+      ABmp.Canvas.Stroke.Thickness := 1;
       FFill.Color := FFill.Color;
       if FShape in [ksRectangle, ksRoundRect, ksSquare] then
       begin
@@ -6791,7 +6791,7 @@ begin
       if FIcon = nil then
       begin
         FIcon := TksTableViewAccessoryImage.Create;
-        FIcon.Assign(AccessoryImages.GetAccessoryImage(FAccessory));
+        FIcon.Assign(AAccessories.GetAccessoryImage(FAccessory));
         (FIcon as TksTableViewAccessoryImage).Color := FTextColor;
       end;
 
@@ -7052,8 +7052,8 @@ begin
       ACanvas.FillRect(RectF(ARect.Left+AXShift, ARect.Top+AYShift, ARect.Right, ARect.Bottom), 0, 0, AllCorners, 1);
 
       ACanvas.Stroke.Color :=  GetColorOrDefault(FStroke.Color, claDimgray);
-      ACanvas.StrokeCap := TStrokeCap.Flat;
-      ACanvas.StrokeJoin := TStrokeJoin.Miter;
+      ACanvas.Stroke.Cap := TStrokeCap.Flat;
+      ACanvas.Stroke.Join := TStrokeJoin.Miter;
       DrawRect(RectF(ARect.Left+AXShift, ARect.Top+AYShift, ARect.Right, ARect.Bottom), 0, 0, AllCorners, 1);
 
       ACanvas.Stroke.Color := ACanvas.Fill.Color;
@@ -9255,11 +9255,11 @@ end;
 initialization
 
   AIsSwiping := False;
-  AccessoryImages := TksTableViewAccessoryImageList.Create;
+  //AccessoryImages := TksTableViewAccessoryImageList.Create;
 
 finalization
 
- FreeAndNil(AccessoryImages);
+ //FreeAndNil(AccessoryImages);
 
 
 end.

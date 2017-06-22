@@ -21,12 +21,12 @@ implementation
 
 procedure TksSegmentButtonsTest.Setup;
 begin
-  FSegmentButtons := TksSegmentButtons.Create(nil);
+ // FSegmentButtons := TksSegmentButtons.Create(nil);
 end;
 
 procedure TksSegmentButtonsTest.TearDown;
 begin
-  FSegmentButtons.Free;
+//  FSegmentButtons.Free;
 end;
 
 initialization
