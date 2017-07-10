@@ -1,11 +1,11 @@
 {
   "search_pathes": [{
     "pathes": ".",
-    "platforms": "Win32;Win64"
+    "platforms": "Win32;Win64;OSX32;Android;IOSDevice32;IOSDevice64"
   }],
   "browsing_pathes": [{
     "pathes": ".",
-    "platforms": "Win32;Win64"
+    "platforms": "Win32;Win64;OSX32;Android;IOSDevice32;IOSDevice64"
   }],
   "source_folders": [{
     "folder": "."
